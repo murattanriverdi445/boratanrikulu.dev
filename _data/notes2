@@ -1,0 +1,43 @@
+tagger parametreler, Dot11Elt ile temsil edilir scapy'de
+
+cap = btk.sprintf("{Dot11Beacon:%Dot11Beacon.cap%}")
+eğer privacy geçmiyorsa içinde, demekki open bir network
+
+kanal numarası
+ord(btk3[Dot11Elt:3].info)
+
+route PRINT -4 // windows cihazlar için
+
+mac filtremeleri aşmak için mac adresi değiştirmek gerekir.
+bunun için **macchanger** kullanılabilir. mac adresi bağlı olanlardan biri olarak değiştirilir, ardından client düşürülüp onun mac adresi ile biz bağlanırız.
+
+ifconfig wlan0 hw ether ff:ff:ff:ff:ff:ff ile de olabilir
+
+arp tablosunu görüntülemek için
+```
+	arp -a
+```
+
+btatt.opcode == 0x12 // write request'leri filtreler
+
+binwalk
+
+hciconfig
+
+bleah -b ff:ff:f:ff:ff:ff -e
+
+gattool
+
+
+android'den loglara bakılır,
+kilit aç kapa yapılıp, log wireshark ile incelenir,
+write requestleri filtrelemeek için btatt.opcode == 0x12 yapılır
+bleah ile bluetooth low energy taranır
+btle, incelendiğinde parola leak edildiği görüldü
+
+rf hacking
+
+hackrf, gqrx
+
+ilk olarak hedef cihazın frekansının tespiti gereklidir. cihazların üzerinde yazar bu değer, ya da fcc ide ile database'lerde sorgu yapılabilir. eğer hiç bir yerde frekans ya da fcc id yazmıyorsa cihazın içi açılıp tespit edilmeye çalışılabilir.
+

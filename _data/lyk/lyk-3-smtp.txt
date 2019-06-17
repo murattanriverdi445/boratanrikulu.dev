@@ -1,0 +1,459 @@
+# !! dns dersinden sonra tekrarla !!
+
+---
+
+## HOSTNAME SETTINGS
+
+# hostname ayarlanması önemli posta servisi için çok önemlidir.
+$ hostnamectl status
+# bize "Static hostname: virtual.example.com" gibi bir yapı gerekli (MX çözümlemesi için)
+
+# Eğer o şekilde değilse, düzeltmek için /etc/hostname ve /etc/hosts değiştirilebilir ama bu eski bir yöntem yapma yani onun yerine hostnamectl ile yapılmalıdır.
+$ hostnamectl set-hostname box.ozguryazilim.com.tr
+
+# ardından bakıldığında hostname değişmiş olur
+$ hostnamectl status
+
+---
+
+## DIG AND CONTROLS
+
+# SMTP'nin düzgün çalışması için dns düzgün çalışmalıdır. çünkü yollanacak yerin adresini dns üzerinden alır. Örneğin bora@lkd.com.tr şeklinde bir hedef olursa lkd'denin dns sisteminde MX'e bakılır. (mail exchanger)
+
+$ dig MX ozguryazilim.com.tr (MX alan adlarını elde etmek)
+$ dig A aycicegi.ozguryazilim.com.tr (alan adını ip'e çevirmek)
+# Bu şekildeki bir kontrol ile hostname'e bakar, ip uymuyorsa kabul etmeyebilir.
+
+# Ters dns kaydınına şöyle bakılabilir (bunun da doğru olması gerekir)
+$ dig PTR 174.58.243.136.in-addr.arpa (ip adresi tersten girilir)
+
+# SMTP'de default olarak port 25 kullanır. (ISP'lerde genel 25 engellidir)
+# dışarıya erişimin olması önemli
+$ telnet aycicegi.ozguryazilim.com.tr 25 (örneğin vodafone'da engellidir)
+
+# tarihin düzgün olmasında fayda var
+$ date
+$ timedatectl
+
+# NTP(Network Time Protocol) sayesinde bilgisayarın saatinin kayması önlenir. Bu sayafe saat farkları düzeltilebilir.
+$ yum install ntp
+$ systemctl start ntpd
+$ ntpq -pn
+
+																  (saat farkı)
+	     remote           refid      st t when poll reach   delay   offset  jitter
+	==============================================================================
+	*192.36.143.130  .PPS.            1 u    1   64    1  135.723   -5.792  12.139
+	 193.140.100.40  5.45.97.157      3 u    2   64    1   60.574  -21.876  12.803
+	 85.199.214.98   .GPS.            1 u    1   64    1  125.014  -17.851  15.714
+	 194.27.156.207  194.27.222.5     2 u    2   64    1   83.705  -15.672   7.695
+
+# SMTP sunucusu üzerinde bir syslog daemon'u çalışmalıdır
+$ ps faux | grep syslog
+
+# Mail logları /var/log/maillog' da tutulur
+
+# Simple Mail Transfer Protocol is an Internet standard for electronic mail transmission.
+
+---
+
+## SMTP - SENDING MAIL ON LOCAL
+
+# SMTP telnet üzerinden iletişim kurar
+$ telnet localhost 25
+
+# Selam verilmelidir. HELO ve EHLO olabilir. EHLO daha ayrıntılı bir iletişim sağlar
+~ HELO localhost
+	
+	250 box.ozguryazilim.com.tr
+
+~ EHLO localhost
+
+	250-box.ozguryazilim.com.tr
+	250-PIPELINING
+	250-SIZE 10240000
+	250-VRFY
+	250-ETRN
+	250-ENHANCEDSTATUSCODES
+	250-8BITMIME
+	250 DSN
+
+(envelope'a konulan gönderici adresi)
+~ MAIL FROM:bill.gates@microsoft.com
+
+	250 2.1.0 Ok (yani default ayarlarda heryerden kabul ediyor)
+
+(envelope'a konulan hedef adresi)
+~ RCPT TO:elon.musk@tesla.com
+	
+	250 2.1.5 Ok
+
+# Aslında normal bir SMTP sunucusu bu tarz bir girdi kabul etmez. Ama default ayarlarda, ya da protokol bakımından bu şekilde bilgilerin girilmesinde bir sorun yoktur. Yani default ayarlar ile hata vermeyecektir.
+
+# Mail'in HEADER ve BODY içeriği DATA denilerek girişe başlanabilir. Bilgilerin girilmesi zorunluluk değildir. "\n.\n" şekinde DATA modundan çıkılabilir.
+
+~ MAIL FROM: erdem.bayer@ozguryazilim.com.tr
+	250 2.1.0 Ok
+~ RCPT TO: erdem.bayer@ozguryazilim.com.tr
+	250 2.1.5 Ok
+~ DATA
+	354 End data with <CR><LF>.<CR><LF>
+~ From: bill.gates@microsoft.com
+~ To: elon.musk@tesla.com
+~ Hello
+~ I have decided to change Windows licence to GPL3
+~ Bye.
+~ .
+	250 2.0.0 Ok: queued as B9CB02054AC7
+~ QUIT
+	221 2.0.0 Bye
+
+---
+!note burayı atladım şimdilik
+
+## PostFix Anatomy
+
+# http://www.porcupine.org/postfix/doc/big-picture.html
+# Ayrı ayrı parça olarka çalışır, gönderme bozulsa bile almaya devam eder. Her servisin durumu ayrı ayrıdır.
+
+# Postfix Anatomy - Receiving Mail
+# http://www.porcupine.org/postfix/doc/receiving.html
+# (dikdörtgenler kuyruk, rewrite filan yapılıp clenaup yapılır, ardından incoming kuyruğuna eklenir)
+
+# Postfix Anatomy - Delivering Mail
+# http://www.porcupine.org/postfix/doc/delivering.html
+# qmgr active kuyruğundan mailleri alır, eğer kendi kullanıcısına gelmiş ise local daemon'na verir, eğer başka bir smtp'ye aktarılacak ise smtp smtp daemon'a verilir, 
+# transport nasıl iletileceğini söyler
+# relocated daha önce olan ve yönlendirme yapılacaklar listesi
+# pipe 3rd parti yazılımlara çıktıları girdi olarak vermek için kullanılır. Virüs taraması, spam kontrol, dosya gönderimlerini silmek
+
+# bounce ile mail'in geri döndürülmesi sağlanır.
+
+---
+
+## Install and Configure PostFix
+
+$ yum install postfix
+(location)
+$ ls /etc/postfix/
+(daemons)
+$ ls /usr/libexec/postfix/
+(kuyrukların nereye yazılacağını söyler)
+$ ls /usr/spool/postfix/
+$ cat /etc/passwd | grep post (postfix diye login olamayan bir kullanıcı vardır)
+
+(main.cf ve master.cf iki tane önemli ayar dosyasıdır)
+$ ls -l /etc/postfix/
+
+# main.cf için bütün parametreler http://www.postfix.org/postconf.5.html
+$ nano /etc/postfix/main.cf
+
+# eğer "myhostname" set edilmez ise sistemin hostname'ni kullanır.
+~ myhostname = virtual.ozguryazilim.com.tr
+~ mydomain = ozguryazilim.com.tr
+
+# "inet_interfaces" hangi interface'lere geleceğini belirler (genel de all olur)
+
+# "mynetworks" default olarak kapalı kalırsa, local'deki cihazlara kontrol yapılmaz.
+
+# ya da elle yapmak yerine "mynetworks_style" ile ayar yapılabilir. class, subnet, host gibi..
+
+	class = aynı class'da olan herkes
+	host = sadece server
+	subnet = subnet'teki herkes
+
+# "myorigin"
+
+# "mydestination" hangi alan adları için postalar kabul ettiğimizi söyler, başka server'a ileteceksek bile bu listede olmalı.
+
+# "home_mailbox" kullanıcının mailbox'nın nerede olduğunu belirtir, kullanıcının ev dizini içersindeki Maildir'e bırakır default olarak. 
+
+---
+
+## Basic Settings to Sending Mails on Local
+
+	Değişecek ayarlar
+
+	myhostname = virtual.example.com
+	inet_interface = all
+	mydomain = example.com
+	mynetworks = 127.0.0.1/32, localhost
+	myorigin = example.com
+	mydestination = example.com
+	home_mailbox = Maildir/
+
+$ systemctl reload postfix
+
+$ systemctl status postfix (kontrol etmekte fayda var)
+
+---
+
+$ telnet virtual.example.com 25
+(eğer bağlanamıyorsan 127.0.0.1'e git ya da hostname değiştir)
+~ EHLO localhost
+	250-virtual.example.com
+	250-PIPELINING
+	250-SIZE 10240000
+	250-VRFY
+	250-ETRN
+	250-ENHANCEDSTATUSCODES
+	250-8BITMIME
+	250 DSN
+~ MAIL FROM:virtual@example.com
+	250 2.1.0 Ok
+~ RCPT TO:virtual@example.com
+	250 2.1.5 Ok
+~ DATA
+	354 End data with <CR><LF>.<CR><LF>
+~ asd
+~ asd
+~ asd
+~ .
+	250 2.0.0 Ok: queued as 714132042216
+
+---
+
+$ tail -f /var/log/maillog
+
+	Jul 23 16:12:51 virtual postfix/smtpd[1678]: connect from virtual.example.com[fe80::ba31:5ef6:7dff:f211]
+	Jul 23 16:13:19 virtual postfix/smtpd[1678]: 714132042216: client=virtual.example.com[fe80::ba31:5ef6:7dff:f211]
+	Jul 23 16:13:24 virtual postfix/cleanup[1684]: 714132042216: message-id=<20180723131319.714132042216@virtual.example.com>
+	Jul 23 16:13:24 virtual postfix/qmgr[1343]: 714132042216: from=<virtual@example.com>, size=362, nrcpt=1 (queue active)
+	Jul 23 16:13:24 virtual postfix/local[1685]: 714132042216: to=<virtual@example.com>, relay=local, delay=16, delays=16/0.04/0/0, dsn=2.0.0, status=sent (delivered to maildir)
+	Jul 23 16:13:24 virtual postfix/qmgr[1343]: 714132042216: removed
+	Jul 23 16:13:30 virtual postfix/smtpd[1678]: disconnect from virtual.example.com[fe80::ba31:5ef6:7dff:f211]
+
+$ cd /home/virtual
+$ cd Maildir
+$ cd new
+$ cat 1532351604.Vfd00I60a0237M651114.virtual.example.com 
+
+	Return-Path: <virtual@example.com>
+	X-Original-To: virtual@example.com
+	Delivered-To: virtual@example.com
+	Received: from localhost (virtual.example.com [IPv6:fe80::ba31:5ef6:7dff:f211])
+		by virtual.example.com (Postfix) with ESMTP id 714132042216
+		for <virtual@example.com>; Mon, 23 Jul 2018 16:13:08 +0300 (+03)
+	Message-Id: <20180723131319.714132042216@virtual.example.com>
+	Date: Mon, 23 Jul 2018 16:13:08 +0300 (+03)
+	From: virtual@example.com
+	Test Message Test Message
+	Test Message Test Message
+	Test Message Test Message
+
+---
+
+# Aliases Tablosu takma isimlere göre hangi kullanıcılara yollanacağını belirtir
+
+$ cat /etc/aliases
+$ postalias /etc/aliases (daha hızlı okunacak bir binary dosya oluşturur (.db))
+
+---
+
+# PostFix birden fazla domain'e hizmet verebilir. Bunun için Virtual Routing/Hosting kullanılır. Bu sayede birden fazla domain'den mail alınabilir.
+
+---
+
+# Canonical tablosu : from + to
+# Virtual tablosu : + to
+
+---
+
+# Sistemde kayıtlı olmayan bir kullanıcıya posta yollamak için "virtual_mailbox_domains" kullanılır.
+
+$ cat /etc/postfix/virtual_maps
+	
+	erdem@a.example.com /tmp/mail/a.example.com/erdem
+	hasan@b.example.com b.example.com/hasan
+	ahmet@example.org example.org/ahmet/
+
+$ cat /etc/postfix/virtual_domains 
+	
+	a.example.com
+	b.example.com
+	example.org
+
+# settings /var/postfix/main.cf
+
+	myhostname = virtual.example.com
+	inet_interfaces = all
+	mydomain = example.com
+	mynetworks = 127.0.0.1/32, localhost,
+	myorigin = example.com
+	mydestination = example.com
+	home_mailbox = Maildir/
+
+	virtual_mailbox_domains = /etc/postfix/virtual_domains
+	virtual_mailbox_base = /tmp/mails
+	virtual_mailbox_maps = hash:/etc/postfix/virtual_maps
+	virtual_minimum_uid = 1000
+	virtual_uid_maps = static:1001
+	virtual_gid_maps = static:1001
+	# virtual_uid_maps =hash:/etc/postfix/virtual_uid_maps
+	virtual_alias_maps = static:1001
+	# virtual_alias_maps = hash:/etc/postfix/virtual
+
+
+# Dosyanın hash'ini çıkarırız (.db)
+$ postmap /etc/postfix/virtual_maps
+
+---
+
+$ nano /etc/postfix/master.cf (çalışan daemon'ların ayarları)
+
+$ cat /etc/services (servislerin default portlarını gösterir)
+
+smtp serverları birbiri arasında telnet üzerinden başladığı için güvenli değil.
+
+bu yüzden SMTP + TLS = Submission şeklinde bir protokol vardır. Bunda Auth zorunludur. (port 587)
+
+$ telnet localhost 587
+
+---
+
+# smtpd_client_restrictions ile bağlantı açıldığında kısıtlamalar yapılabilir, http://www.postfix.org/postconf.5.html#smtpd_client_restrictions
+
+# smtpd_sender_restrictions , http://www.postfix.org/postconf.5.html#smtpd_sender_restrictions
+
+# reject_authenticated_sender_login_mismatch (bill.gates diye mail yollanmasını engellenmek için)
+
+# reject_unknown_sender_domain, olmayan bir adresten mail yollanmasını engellemek için (MX kaydı yoksa engeller)
+
+SMTP + EHLO hostname + smtpd_client_restrictions + MAIL FROM... + smtpd_sender_restrictions + DATA + smtpd_data_restrictions
+
+# e-postayı başka birine iletmeye RELAY denir. Buna smtpd_relay_restrictions
+
+---
+
+### İKİNCİ GÜN
+
+---
+
+# Mail yazılması için dizin ya da dosya verilebilir. Bütün postaların aynı dosyaya yazılmasına MBOX denir.
+
+MBOX'da sıralı işler hızlı, mail'ler tek dosya üzerinden aç kapa yapmadan direkt olarak okunur.
+Yedekleme işlemi daha kolaydır. Tarihe göre sıralama hızlıdır.
+Eposta'ya müdahale edilmesi gerektiğinde bütün eposta dosya okunması gerekir yani daha yavaştır. 
+Arama işlemleri hızlıdır.
+Eposta taşıma işlemi daha hızlı ve kolaydır.
+
+Diğer header'lara göre sıralama daha yavaştır.
+Silme işlemleri daha yavaştır.
+Saklanan e posta boyutu fazla ise dosya boyu artar.
+Dosya bozulmalarında risk daha büyüktür.
+Bir çok deamon'ın dosya üzerinde işlem yapması, süreçler arası bekleme durumu doğurur, performans düşer.
+
+# Postalar dizin içinde ayrı ayrı dosyalara yazmak için MAILDIR kullanılır
+
+mbox ile ters koşulları var
+
+# Bir sunucuda ya MBOX ya da MAILDIR kullanılabilir. Yani ikisi birden olmaz.
+
+---
+
+# Başka bi sunucu üzerinde tutup, network üzerinden yazmaya Network Attached Storage (NAS) denir.
+
+NAS sistemlerde maildir kullanmak daha mantıklı, mbox ile daha yavaş çalışır.
+
+---
+
+# Kullanıcıların eposta'larını görüntüleyebilmeleri için iki protokol vardır;
+POP(post Office Protocol) ve IMAP(Internet Mail Protokol)
+
+POP'da tüm postaları istemci alır. (mbox ile daha hızlı çalışır)
+IMAP'de istemci postaları görüntüler. Istemci yaptırmak istediklerini server'a söyler ve işlemler server tarafından yapılır.
+
+---
+
+# Dovecot is an open source IMAP and POP3 email server
+
+---
+
+$ yum install dovecot
+$ ls /etc/dovecot/conf.d/
+$ nano /etc/dovecot/dovecot.conf (conf.d/ altında koyduğunuz dosyalar ayar dosya tarafından alınır işlenir)
+
+# #protocols = imap pop3 lmtp
+# ile hangi hizmetin verileceği söylenir.
+# birden fazla hizmet için yan yana yazılmalıdır.
+
+# #listen =
+# sunucunun hangi adreslerden hizmet vereceğini belirtir
+
+# #login_greeting = Dovecot ready.
+# sunucunun bağlanmasında çıkan mesaj. hangi sunucu olduğunu göstermemek için genelde değiştirirler.
+
+---
+
+$ nano /etc/dovecot/conf.d/10-master.conf (portlar filan)
+$ nano /etc/dovecot/conf.d/10-mail.conf (kullanıcın dosyalarına nasıl işlem yapılacağı)
+# #mail_location = (her kullanıcı için epostaların hangi format ve nerede tutulacağını söyler)
+
+	mail_location = maildir:~/Maildir
+	mail_location =	maildir:/tmp/mail/%d/%u
+
+$ nano /etc/dovecot/conf.d/10-auth.conf (kullanıcıların kendilerini nasıl tanımlayacaklarını anlatır)
+
+# #disable_plaintext_auth = yes açılırsa ssl kullanılmaz ise username ve parola almaz, biz no dedik
+
+# !include auth-system.conf.ext include ediliyor
+
+$ /etc/dovecot/conf.d/auth-system.conf.extak için "virtual_mailbox_domains" kullanılır.
+
+# !include auth-passwdfile.conf.ext'i include et
+
+$ nano /etc/dovecot/conf.d/auth-system.conf.ext
+
+$ ls /etc/dovecot/conf.d/auth-*
+
+	/etc/dovecot/conf.d/auth-checkpassword.conf.ext
+	/etc/dovecot/conf.d/auth-passwdfile.conf.ext
+	/etc/dovecot/conf.d/auth-deny.conf.ext
+	/etc/dovecot/conf.d/auth-sql.conf.ext
+	/etc/dovecot/conf.d/auth-dict.conf.ext
+	/etc/dovecot/conf.d/auth-static.conf.ext
+	/etc/dovecot/conf.d/auth-ldap.conf.ext
+	/etc/dovecot/conf.d/auth-system.conf.ext
+	/etc/dovecot/conf.d/auth-master.conf.ext
+	/etc/dovecot/conf.d/auth-vpopmail.conf.ext
+
+$ nano /etc/dovecot/users
+
+	virtual@example.com:{CRYPT}fLP8trDpiExJw:1000:1000::/home/virtual/::
+
+	parola için (doveadm pw -s CRYPT)
+
+$ systemctls restart postfix
+$ systemctl restart dovecot
+
+100 portu kullanıyor
+
+$ telnet localhost 110
+
+user virtual@example.com
+	+OK
+pass PASSWORD
+
+list (ama 0 dedi buraya bakarsın)
+
+---
+
+## imap ile bağlanmak
+
+$ telnet localhost 143
+~ a login virtual@example.com qweasdqwe
+~ a list "" "*"
+~ a select INBOX
+~ a search all
+~ a list "" "*"
+~ a fetch 1 BODY[]
+(mesajı görmediği için gösteremedi)
+
+---
+
+## 3rd
+
+virüs taramalar için clamav kullanılır genellikle
+spam için spamassassin 
+amavisd-new ile içerik filtreme servislerini ortak bir yerden ayarlamak ve kullanmak amaçlı kullanılan bir program,
+amavisd DIKM(Domain Keys Identified) ve SPF(Sender Policy Framework) sistemleri ile fazladan kontrol yapar.

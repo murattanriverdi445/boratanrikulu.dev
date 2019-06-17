@@ -1,0 +1,196 @@
+# ağ sanallaştırması (vlan)
+# dosya sanallaştırması (nas)
+# 
+
+
+---
+# RAID bir sanallaştırma yöntemidir.
+	-> RAID 0
+	-> RAID 1
+	-> RAID 5
+
+## RAID 0 ##
+	100 GB     100GB
+   ________   ________
+  |	Disk 1 | | Disk 2 |
+   ________   ________
+          \   /
+     RAID CONTROLLER
+            |
+            |
+            |
+            |
+           DATA
+
+200 GB kullanılır. Biri bozulduğu anda patlamış oluyor.
+
+## RAID 1 ##
+	100 GB     100GB
+   ________   ________
+  |	Disk 1 | | Disk 2 |
+   ________   ________
+          \   /
+     RAID CONTROLLER
+            |
+            |
+            |
+            |
+           DATA
+
+100 GB gibi kullanılır. Veri diğerine kopyalanır. Yani biri mirror olur. 
+
+## RAID 5 ##
+	100 GB     100GB       100GB     100GB
+   ________   ________   ________   ________
+  |	Disk 1 | | Disk 2 | | Disk 2 | | Disk 2 |
+   ________   ________   ________   ________
+            \      \         /       /
+                 RAID CONTROLLER
+                        |
+                        |
+                        |
+                        |
+                       DATA
+
+En az 3 diskli bir yapı olmalı. Yine paylaştırılara yazılır. Ama biri bozulduğunda sistem komple gitmemiş olur.
+
+Çalışma mantığı şu şekildedir.
+
+| D0 | D1 | D2 | P  |
+| 1  | 0  | 0  | 1  |
+| 0  | 1  | 0  | 1  |
+| 1  | 1  | 0  | 0  |
+
+Diyelim D1 patladı, diğer verilerle D1'de ne yazdığını tespit edebilir.
+
+## RAID 10 (1+0) ##
+
+         R1                         R1
+ _______________________  _______________________
+|	100 GB     100GB    ||	 100 GB     100GB    |
+|  ________   ________  ||  ________   ________  | 
+| |	Disk 1 | | Disk 2 | || | Disk 3 | | Disk 4 | |
+|  ________   ________  ||  ________   ________  |
+|_______\_______/_______||______\_________/______|
+            |                        |
+            |                        |
+            |________________________|
+            			R0
+                 RAID CONTROLLER
+                        |
+                        |
+                        |
+                        |
+                       DATA
+---
+
+## İşletim Sistemi Sanallaştırması ##
+
+# Tür 1 (daha çok sunucularda kullanılır) (xen)
+   APP
+   Guest OS
+   Sanallaştırma
+   Donanım
+
+# Tür 2 (bizim şuan kullandığımız bu) (virtualbox, vmware, kvm)
+   App
+   Guest OS
+   Sanallaştırma   <-------------------------------------|
+   Host OS                                               |
+   Donanım                                               |
+                                                         |
+1) Full Virtualization (emulator) (R3'de çalışır) >------|
+2) Para-Virtualization (bazı işlemler kernel'a sorulur) (R1'de çalışır)
+3) Hardware-Assisted Virtualization (2005 gibi filan çıktı) (R0'ı kullanır, İşlemciyi direkt kullanır)
+
+---
+
+Wine Is Not Emulator
+
+---
+
+# İşlemcinin donanım hızlandırmayı desteklediğini görmek için
+$ cat /proc/cpuinfo (flag altında vmx olmalı) (flag olarak sadece, kullanıldığını göstermez)
+# lm = long mod (normalde 32bit, lm var ise 64bit çalıştırabilir anlamında)
+# kvm donanım hızlandırmanın işletim sistemi tarafından kullanılmasını sağlayan modül
+$ lsmod | grep kvm
+
+---
+
+Hypervisor = sanallaştırmayı yöneten uygulamaya denir
+
+---
+
+kvm
+
+---
+
+## CONTAINER
+
+   APP, APP, ..
+   CONTAINER
+   HOST OS
+   DONANIM
+
+# Tabanında LXC kullanır.
+
+
+---
+
+## INSTALL KVM
+
+# https://wiki.archlinux.org/index.php/QEMU
+
+$ pacman -S qemu
+$ qemu-img create test.img 1G
+$ qemu-system-x86_64 -enable-kvm -m 2048 -boot d -cdrom /home/fsutil/Downloads/debian-9.5.0-amd64-netinst.iso -hda test.img
+
+# Başka mimariler için
+$ pacman -S qemu-arch-extra
+
+# Gui'lı olarak kvm'i yöneltmek için
+$ sudo pacman -S virt-manager
+
+$ virt-manager
+$ vim /etc/libvirt/qemu/debian9.xml
+
+---
+
+$ virsh
+$ virt-install --name "kamp_test" --memory 2048 --disk none --location http://ftp.us.debian.org/debian/dists/stable/main/installer-amd64/
+
+---
+
+## INSTALL DOCKER
+
+$ pacman -S docker
+$ systemctl start docker
+$ docker info
+
+---
+
+## INSTALL NGINX WITH DOCKER
+
+https://hub.docker.com/
+https://kitematic.com/
+
+$ docker run --name docker-nginx-test -p 8080:80 -d nginx
+$ docker ps (çalışan docker'ları listeler)
+$ docker images
+$ docker container ls
+$ docker stop docker-nginx-test
+$ docker start docker-nginx-test
+
+$ docker run --name docker-nginx-test -p 80:80 -d -v ~/docker-nginx/html:/usr/share/nginx/html
+$ sudo docker exec -it docker-nginx-test bash
+$ ls -l /var/lib/docker/
+
+---
+
+## LXC (docker'ın atası)
+
+$ pacman -S lxc
+$ lxc-templates
+$ lxc-create -t template -n container
+$ lxc-info
+https://github.com/lxc/lxc-templates/tree/master/templates

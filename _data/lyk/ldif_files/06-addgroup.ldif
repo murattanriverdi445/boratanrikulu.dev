@@ -1,0 +1,19 @@
+dn: cn=sysadmin,ou=Group,dc=aydintd,dc=net
+cn: sysadmin
+objectClass: top
+objectClass: posixGroup
+gidNumber: 10000
+
+dn: cn=developer,ou=Group,dc=aydintd,dc=net
+cn: developer
+objectClass: top
+objectClass: posixGroup
+gidNumber: 11000
+
+dn: cn=manager,ou=Group,dc=aydintd,dc=net
+cn: manager
+objectClass: top
+objectClass: posixGroup
+gidNumber: 12000
+
+# ldapadd -Wx -D cn=admin,dc=aydintd,dc=net -f 06-addgroup.ldif 

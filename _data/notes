@@ -1,0 +1,38 @@
+--
+
+#####
+
+#####
+
+---
+
+
+---
+
+---
+
+
+
+
+---
+
+kimlik doğrulama saldırıları (auth) [wifislax]
+https://www.wifislax.com/
+
+bilgi toplama
+sahta AP oluşturma, dns spoof
+deauth saldırısı, kablosuz ağ
+capture handshake
+
+## scapy
+
+scapy ile probe isteklerini görmek
+
+[github.com/besimaltnok/scapy-cheatsheet](https://raw.githubusercontent.com/besimaltnok/scapy-cheatsheet/master/araclar/probereqanaliz.py)
+
+[github.com/P0cl4bs/WiFi-Pumpkin](https://github.com/P0cL4bs/WiFi-Pumpkin)
+
+---
+
+---
+

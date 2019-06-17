@@ -1,0 +1,244 @@
+---
+
+syslog + relp
+syslog + tls
+nxlog
+
+---
+
+# LOG
+
+RSYSLOG (hem local hem de local olarak kullanılabilir.) (syslog protokolü için)
+
+journalctl systemd ile birlikte gelir. dağıtımlarda genelde journalctl açık gelir.
+
+sistem hem rsyslog'a hem de journalctl'e yazacak şekilde olabilir.
+
+logger ile syslog'a mesaj yollanabilir
+
+$ logger "yep yep yep"
+$ sudo tail -f /var/log/messages (debian'da /var/log/syslog)
+
+$ file /dev/log
+	/dev/log: socket (yani biri buraya yazar, bir diğer daemon da bunu dinler)
+
+# -p (--priority)
+
+	For example, -p
+	              local3.info
+
+	facility ne olduğu yani türünü belirtmek için
+	level aciliyet durumunu göstermek için (severity)
+
+# postfix /dev/log socket'ine log bırakıyor, ardından syslog onu socket'ten alıyor mail facility ile geldiği için /var/log/mail' e yazılır. Facilitiy'ler belirlidir. Değişmez.
+
+$ logger -p mail.info "Bu bir mail log'udur."
+$ cat /var/log/maillog
+	...
+	...
+	Jul 24 14:55:51 box virtual: Bu bir mail log'udur.
+
+
+# Örneğin aşağıdaki gibi bir level yok, hata verecektir
+$ logger -p mail.emergency "Bu bir mail log'udur."
+
+# Ya da aşağıdaki gibi bir facility yoksa hata verecektir.
+$ logger -p postfix.info "Bu bir mail log'udur."
+
+$ logger -p local0.info "local info"
+$ cat /var/log/messages
+
+# conf
+$ nano /etc/rsyslog.conf
+
+# /etc/rsyslog.d/ içine conf ile biten dosya konulursa bu kullanılabilir bir config dosyası olur
+
+# | /dev/log | -> rsyslog -> /var/log/... gibi değil aslında, araya başka modullerde gelir. [$ModLoad imuxsock] olduğu için /dev/log'dan okur. Ya da örneğin journal okumasını sağlatan modul default'ta eklidir.
+
+# ls /usr/lib64/rsyslog/ (modül yerleri)
+
+im : input
+om : output
+
+# örneğin imtcp tcp üzerinden log almayı sağlıyor, bunu kullanmak için $ModLoad imtcp yapılmalı
+
+# #KURAL# bölümüne nerelere yazılcağını yazabiliriz, örneğin mail.* facility ile herşeyi /var/log/maillog'a yazar
+
+	# Log all the mail messages in one place.
+	mail.*                                                  -/var/log/maillog
+
+# eskiden rsyslog'a disk'teki dosyaya kesinlik yazıldığından emin olmak için "sync" çalıştırıldı. Çünkü işletim sistemi tarafından yazıldı denilen şey gerçek anlamda o anda yazılmamıl olabilir. Çünkü önce OS cache ve disk cache'e gider en son disk'e yazılır. Sync cache'de kalanların hepsinin yazılmasını sağlar. Cache'den Disk'e commit edilir.
+
+conf içinde dosyanın başına "-" koymak bunu yazdıktan sonra sync çağıtmana gerek yok demek. Artık bi anlamı yok. "-" konmasa bile sync çağırmaz
+
+# Mesala şöyle bir satır yaptım
+
+	mail.info;authpriv.*;cron.*;                         /var/log/bayaonemliloglar
+
+$ pidof rsyslogd
+
+// $ sudo kill -HUP 979 (hangup, ayar dosyalarını tekrar okur)
+$ sudo service rsyslog force-reload
+
+# İki yerde birden olur 
+$ logger -p mail.info "testtesttest"
+$ cat /var/log/maillog
+$ cat /var/log/bayaonemliloglar
+
+# tüm infolar ama mail auth cron yok demek
+	*.info;mail.none;authpriv.none;cron.none 
+
+
+# Hiç bir yerde olmasını istemiyorsak
+	mail                                                    ~
+
+---
+
+### LOG'u server'a PC'ye Yollamak
+
+## A'da
+
+İki cihaz aça birbiri ile haberleşen. A cihazında böyle yapılacak. Normalde dosyadan alıp(socket) yazıyorduk, aşağidaki modüller sayesinde tcp514 ve udp514'den de log alınabileneceğini belirttik.
+
+	# Provides UDP syslog reception
+	$ModLoad imudp
+	$UDPServerRun 514
+
+	# Provides TCP syslog reception
+	$ModLoad imtcp
+	$InputTCPServerRun 514
+
+$ sudo systemctl restart rsyslog
+(mail engelliydi onu sildik)
+# netstat ile baktığında 514/udp ve 514/tcp rsyslog kullanılıyor olmalı
+$sudo netstat -nlptu
+
+## B'de
+
+B cihazından yolluyoz Aya log.
+
+$ logger -T -n 192.168.42.166 -P 514 -p mail.info "Bu TCP üzerinden giden bir LOG"
+
+# UDP ile
+$ logger -d -n 192.168.42.166 -P 514 -p mail.info "Bu UDP üzerinden giden bir LOG"
+
+
+### bağlantı hatası aldık, iptables engelliyormuş.
+
+iptables boşalttım 
+
+    sudo iptables -P INPUT ACCEPT
+    sudo iptables -P FORWARD ACCEPT
+    sudo iptables -P OUTPUT ACCEPT
+
+    sudo iptables -F
+	sudo iptables -X
+
+# UDP ile yolladığında yollayıp yollayamadığını bilemezsin. Serverdaki sercisi kapat, UDP ile yolla hata vermez.
+
+Eğer belli Facilitiy'ler için başka sunucuya yollmak istiyorsak syslog.conf'da şöyle yapabiliriz. Tüm logları yollıcak.
+
+	# *.*               @192.168.42.166:514 # UDP
+	*.*                 @@192.168.42.166:514 # TCP
+
+# Ardından örneğin bi servis başlat B'de, A cihazında loglara düşer /var/log/messages
+
+### Template
+
+https://www.rsyslog.com/doc/master/configuration/properties.html
+
+	$template FilenameTemplate, "/var/log/remote/%hostname%/%syslogfacility-text%/%syslogseverity-text%.log"
+	*.* ?FilenameTemplate
+
+$ sudo systemctl restart rsyslog
+
+### Bir kaç ek
+
+Şu ana kadar sadece facility ve severity için  filtreleme yaptık. Bunlar hep Priority Based Filtering'di
+
+Ama Property Based Filtering ile de yapılabilir.
+
+Bunun syntax'ı şöyle
+	
+	:PROPERTY,COMPARISON_OPERATOR,"COMPARISON"
+	:host,is_equal,"virtual"
+
+Diğer bir yöntem de Expression-based Filtering'dir.
+
+	if $syslogfacility-text == 'local0' and $msg startswith 'DEVNAME' and ($msg contains 'error1' or $msg contains 'error0') then /var/log/somelog
+
+Aynı filtre için birden fazla aksiyon şu şekilde
+
+	filtre							/var/log/message
+	&								@192.168.3.5
+	&								@192.168.3.6
+
+Kuyruk yapıları oluşturulabilir https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux/7/html/system_administrators_guide/s1-working_with_queues_in_rsyslog
+
+https://www.rsyslog.com/doc/v8-stable/whitepapers/queues_analogy.html
+
+## Logrotate ile log'ların rotasyonu sağlanır.
+
+$ cat /etc/logrotate.conf
+
+# örneğin rotate 4 ayarlı ise
+
+mail.log olsun
+
+1. çalışınca mail.log mail.log.1
+
+2. çalışınca mail.log mail.log.1 mail.log.2
+
+3. çalışınca mail.log mail.log.1 mail.log.2 mail.log.3
+
+4. çalışınca mail.log mail.log.1 mail.log.2 mail.log.3 mail.log.4
+
+5. çalışınca mail.log mail.log.1 mail.log.2 mail.log.3 mail.log.4
+
+# rotasyon süreleri için yearly monthly weekly daily hourly
+
+# Boyutu aşarsa rotate et deriz
+
+size 250M
+
+# Rotate sonrası sıkıştırma yapılsın mı (gz)
+
+compress
+
+copytruncate
+
+create mode owner group, create owner group
+
+mail address
+
+mailfirst
+
+olddir directory
+
+$ sudo logrotate --verbose /etc/logrotate.conf
+
+$ nano /etc/logrotate.d/syslog
+
+~ size 100k
+
+---
+
+# Elastic Search ya da Solar
+
+gibi veri tabanlarında çok hızlı arama yapılabilir. log'u elasticsearch'e koysak çok hızlı bir şekilde içersinde arama yapabiliriz
+
+ELK/EFK STACK
+
+E   : ElasticSearch    : Sakalma / Arama
+K   : Kibana           : Arayüz
+L/F : Logstash/Fluentd : Toplama ve İşleme
+
+Çift sayıda saklama, tek sayıda sakla 3-2 gibi
+
+
+---
+
+
+graylog
+
+http://docs.graylog.org/en/2.4/pages/getting_started.html

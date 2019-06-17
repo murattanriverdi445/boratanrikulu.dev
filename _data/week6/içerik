@@ -1,0 +1,30 @@
+6. HAFTA: BAZI ATAKLAR, PAKET ANALİZLERİ VE DOS
++ Pass the hash atakları
+o Hafızadan parola/hash yakalama yöntemleri
++ Pwdump kullanımı
+o Fgdump kullanımı
+o Mimikatz kullanımı
++ Paket Analizi ve Sniffing
+*- TCP/IP Yapısı ve temel kavramlar
++ Paket analizi
++ Sniffing kavramı ve çeşitleri
++ Aktif sniffing
++ Pasif sniffing
++ Sık kullanılan araçlar
++ Wireshark kullanımı
++ Tcpdump kullanımı
++ Wireshark ile paket analizi
++ Uygulamalı örnekler
+o DoS ve DDoS Saldırıları nedir?
+o DoS atakları ve çeşitleri
+o Smurf Atak
+o Flood Ataklar
+o TearDrop
+o Ping of Death
+o Yazılım tabanlı DoS
+o DoS exploitleri
+o DDoS atakları ve çeşitleri
+o Temel kavramlar
+o Botnetler ve kullanım alanları
+o DNS e yönelik ataklar
+- Korunma yöntemleri

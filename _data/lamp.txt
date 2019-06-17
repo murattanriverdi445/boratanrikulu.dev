@@ -1,0 +1,36 @@
+# Debian 9
+	apt install apache2
+	apt install mariadb-server
+	mysql_secure_installation
+	nano /etc/mysql/mariadb.conf.d/50-server.cnf # bind-address
+	mariadb -u root
+		SELECT User,Host,Password FROM mysql.user;
+		UPDATE mysql.user SET Password=PASSWORD('newPassWord') WHERE User="demo-user";
+
+		CREATE USER 'test'@'localhost' IDENTIFIED BY 'asd';
+		GRANT ALL PRIVILEGES ON *.* TO 'test'@'localhost';
+		show grants for 'test'@'localhost';
+	apt install php php-mysql
+	apt install phpmyadmin
+
+# CentOS 7
+	yum install httpd
+	systemctl start httpd
+	systemctl enable httpd
+	firewall-cmd --zone=public --permanent --add-service=http
+	yum install mariadb-server mariadb-client
+	systemctl start mariadb
+	systemctl enable mariadb
+	mysql_secure_installation
+	yum install php php-mysql
+	wget https://wordpress.org/latest.zip
+	unzip latest.zip
+	rm -rf /var/www/html/
+	cp -rf wordpress/ /var/www/html/
+	systemctl restart httpd
+	systemctl restart mariadb
+	chown -R apache:apache /var/www/html/*
+	mysql -u root -p
+		https://www.digitalocean.com/community/tutorials/how-to-install-wordpress-on-centos-7
+	cp wp-config-sample.php wp-config.php
+	nano wp-config.php

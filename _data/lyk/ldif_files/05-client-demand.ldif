@@ -1,0 +1,13 @@
+dn: cn=config
+changetype: modify
+replace: olcTLSVerifyClient
+olcTLSVerifyClient: allow
+-
+replace: olcTLSCACertificateFile
+olcTLSCACertificateFile: /etc/pki/tls/certs/ca.pem
+-
+replace: olcTLSCertificateFile
+olcTLSCertificateFile: /etc/pki/tls/certs/server.pem
+-
+replace: olcTLSCertificateKeyFile
+olcTLSCertificateKeyFile: /etc/pki/tls/certs/server.key

@@ -1,0 +1,356 @@
+# https://wiki.archlinux.org/index.php/File_systems
+
+# Minix, öğretmek amacıyla Andrew S. Tanenbaum tarafından yazılmış. Çünkü unix kapalı kaynak.
+# Ardından Linus Torvalds Minix'i inceleyip geliştirme kararı alıyor. Ve ortaya Linux çıkıyor.
+
+# https://en.wikipedia.org/wiki/Tanenbaum%E2%80%93Torvalds_debate
+
+# https://en.wikipedia.org/wiki/GNU_Hurd
+
+---
+
+## File System
+
+ | Hard Disk Record | Partiton 1 | Partiton 2 | Partion 3 |
+                    |____________|
+                         /
+                        /
+                       /
+ | Boot Block | SuperBlock | Inode List | Data |    |     |     |
+
+# EXT
+-> Isim : 255 karakter
+-> Boyut(max) : 2GB
+
+# EXT2 (1992)
+-> Isim : 255 karakter
+-> Boyut(max) : 4TB
+-> Journaling yapısı yok
+
+# EXT3 (2001)
+-> Journaling geliyor
+
+# NTFS
+-> Journaling geliyor
+
+## Journaling
+# Bir dosya değiştirildiğinde hem dosyanın içeriğini hem de metadata'sı yazılır journal'a.
+# Verilerin bozulup bozulmadığını açılırken journal'da kalan verilere bakar. Eğer verilerin metadata'ları ile uyuşuyor ise journal'ı temizler. Metadata uyuşmuyorsa dosya bozulmuştur, silmek için sorar.
+
+---
+
+epoch
+2038 (32 bit olduğu için ext3 sistemler patlıcak)
+
+---
+
+# EXT4 (2008)
+-> 34 bit
+-> Alt dizin sınırı yok
+
+---
+
+Dosya sistemleri çekirdek seviyesinde çalışır. Ama Fuse ile user seviyesinde işlem yapılabilir.
+
+---
+
+## Filesystem Hierarchy
+
+# https://en.wikipedia.org/wiki/Filesystem_Hierarchy_Standard
+
+/ -> kök dizin
+    /bin -> binary files
+    /boot -> boot files
+    /dev
+        /dev/sda1
+        /dev/null
+        /dev/zero
+        ...
+    /etc -> config files
+        /etc/passwd
+        /etc/shadow
+    /home
+        ~/.config/
+        ~/.bashrc
+        ~/.cache/
+    /lib -> Libraries essential for the binaries in /bin and /sbin. 
+    /media
+    /mnt
+    /opt -> Optional (filesystem hierarchy'e uymak istemeyenler burada)
+    /proc -> Virtual filesystem providing process and kernel information as files. (gerçek zamanlı, ram'de tutuluyor aslında)
+    /root
+    /run -> Çalışma zamanında oluşan şeyler (sistem açıldığında temizlenir)
+    /sbin -> system için binaries e.g. fsck, init, route
+    /src -> servisler tarafından kullanılır. (zorunlu bir dizin değil)
+        /src/www/
+    /sys -> kernel ayarlarının bulunduğu kısım (ip_forward'ı açmak gibi)
+    /tmp
+    /usr -> yalnızca salt-okunur olarak bulunur, ikinci bir hierarchy (unic system resources) (sistem için önemli şeyler değil), genellikle kurduğumuz programlar burada olur
+        /usr/bin -> binaries
+        /usr/include -> headers (imports)
+        /usr/lib
+        /usr/local -> paket yöneticisi harici kurulan uygulamaların bulunduğu yer
+        /usr/sbin -> gereksiz sistem binaries
+        /usr/share
+        /usr/src -> kaynak kodlar
+    /var -> değişken dosyalar tutulur (database gibi)
+        /var/cache
+        /var/lib
+        /var/lock
+        /var/log
+        /var/mail -> root'a mail atılabilir buradan
+        /var/opt
+        /var/run
+        /var/spool
+            /var/spool/mail
+        /var/tmp
+
+---
+
+$ ls -lh
+$ du
+$ ls -i
+
+$ ln -s /path/to/file /path/to/link (soft)
+$ ln /path/to/file /path/to/link (hard)
+$ ls -hi fuck 
+6558728 fuck
+$ ls -i fuck 
+6558728 fuck
+$ ls -i /tmp/fucking_a_file 
+122709 /tmp/fucking_a_file
+$ du -h fuck
+0	fuck
+$ du -h /tmp/fucking_a_file 
+4.0K	/tmp/fucking_a_file
+$ ln -s /tmp/fucking_a_file ~/fuckingHardLink
+$ ls -li fuckingHardLink 
+6570887 lrwxrwxrwx 1 fsutil users 19 Jul 29 15:13 fuckingHardLink -> /tmp/fucking_a_file
+$ lsof (sistemde o sıra açık olan, kullanımda olan dosyaları listeler)
+
+---
+
+https://explainshell.com
+
+---
+
+cat /etc/fstab
+
+---
+
+df -h
+
+---
+
+dd
+https://wiki.archlinux.org/index.php/USB_flash_installation_media
+$ dd if=/dev/zero of=/dev/sdxs
+
+---
+
+mkfs.[tab]
+
+---
+
+mount -o loop
+
+---
+
+loop
+The  loop device is a block device that maps its data blocks not to a physical device such as a hard disk or optical disk drive, but to the blocks of a regular file  in  a filesystem  or  to another block device.  This can be useful for example to provide a block device for a filesystem image stored in a file, so that it can be mounted  with the mount command.
+
+raid yapabilmek için mount olmamalı, o yüzden önce losetup yaptık. Yoksa sadece mount edip kullanmak için direkt "mount -o loop disk.img /mnt" denebilirdi.
+
+$ losetup /dev/loop1 disk.img
+$ losetup /dev/loop2 disk2.img
+$ mdadm --create /dev/md0 --level=0 --raid-devices=2 /dev/loop1 /dev/loop2
+$ mkfs.ext4 /dev/md0
+$ mount /dev/md0 /mnt
+$ ls -l /mnt
+
+---
+
+ext4
+btrfs
+zfs
+xfs
+
+---
+---
+---
+
+ftp != sftp
+
+rfc (request for comments) (yazılan bir protokolün kuralları)
+
+---
+
+$ yum install
+$ nano /etc/vsftpd/vsftpd.conf
+    
+# umask 022 şu anlama geliyor, mesela 777 olan yerden çıkarılır 755 olur.
+# chroot ile kullanıcının kök olarak kendi home dosyasını görmesini sağlayabiliriz.
+
+$ systemctl start vsftpd
+
+# server için
+$ firewall-cmd --zone=public --add-service=http
+
+# client için
+$ yum install ftp
+
+# client'tan bağlanılır
+$ ftp IPADRESI
+
+    !           debug       mdir        sendport    site
+    $           dir         mget        put         size
+    account     disconnect  mkdir       pwd         status
+    append      exit        mls         quit        struct
+    ascii       form        mode        quote       system
+    bell        get         modtime     recv        sunique
+    binary      glob        mput        reget       tenex
+    bye         hash        newer       rstatus     tick
+    case        help        nmap        rhelp       trace
+    cd          idle        nlist       rename      type
+    cdup        image       ntrans      reset       user
+    chmod       lcd         open        restart     umask
+    close       ls          prompt      rmdir       verbose
+    cr          macdef      passive     runique     ?
+    delete      mdelete     proxy       send
+
+---
+
+filezilla
+
+---
+
+anonymous kullanıcılar için /var/ftp/ ön tanımlı kök dizindir.
+
+---
+
+pasif bağlantı için
+# connect_from_port_20=NO
+$ systemctl restart vsftpd
+
+pasif için port aralığı
+# pasv_enable = YES
+# pasv_min_port=10050
+# pasv_max_port=12050
+
+---
+
+ftp bu dosyadaki kullanıcıların bağlanmasını engeller
+/etc/vsftpd/user_list
+# userlist_deny=NO
+
+---
+
+anonymous dizini değiştirmek için
+anon_dir=/path/to/
+
+---
+
+tarayıcı üzeriden bir kullanıcı için ftp'e bağlanmak
+ftp://userName@IpAdresi
+
+---
+---
+---
+
+Samba
+CIFS
+SMB -> Server Message Block
+RPC -> Remote Procedure Call
+
+Samba SMB protokolünü kullananan bir yazılımdır.
+
+#Server
+$ yum install samba
+
+#Client
+$ yum install samba-client
+
+## server
+$ nano /etc/samba/smb.conf
+
+# dosya kontrolü için
+$ testparm
+
+$ firewall-cmd --zone=public --add-service=samba
+$ systemctl start smb
+
+## client
+$ smbclient
+
+# erişebileceğimiz yerleri görmek için
+$ smbclient -L 192.168.42.166 -U%
+
+## server en alta ekledik
+
+    [samba]
+    path = /samba_test/
+    browsable = yes
+    writable = yes
+    read only = no
+    force user = nobody
+    public = yes
+    quest ok = yes
+
+$ testparm
+
+## client
+$ smbclient -U% //IPADRESI/samba/
+
+
+## client
+$ mkdir /mnt/samba_share_folder
+$ mount -t cifs -o guest //192.168.42.166/samba /mnt/samba_share_folder
+
+# pdbedit ile /var/lib/samba/private/passdb.tdb düzenlenebilir.
+
+$ mount -t cifs username=Username,password=Password //IPADRESI
+
+$ smbpasswd username
+
+# resolver
+$ cat /etc/samba/lmhosts
+
+---
+
+Bir dosyayı ayna anda yalnızca bir client yazabilir, o sırada diğer client'lara sadece okuma verilir.
+
+---
+---
+---
+
+## NFS (NETWORK FILE SYSTEM)virt
+
+Bu da RPC kullanır.
+
+$ yum install nfs-utils
+
+# /etc/nfs.conf (ayar kısmı)
+# /etc/exports (erişimleri tanımladığımız yer) (man exports)
+    "/nfsmount   192.168.42.173(rw) virtual.box.com(rw) 192.168.2.0/24(ro)"
+# systemctl restart nfs-server
+# systemctl status nfs-server
+
+## client
+$ yum install nfs-utils
+$ showmount -e 192.168.42.166 (neler paylaşılıyor görmek için)
+$ mount -t nfs 192.168.42.166:/nfsmount /mnt (mount'lamak için)
+
+# modlar
+
+$ exportfs -v
+
+ro
+rw
+async (geri cevap anında gelebilir ama arkada işlem devam eder gibi)
+sync (komut gönderildiğinde, cevap dönüldüğü gibi işlem uygulanır)
+no_root_squash()
+
+client'da otomatik mount'lamak için
+"
+    192.168.42.166:/nfsmount        /mnt    nfs     defaults        0   0
+""

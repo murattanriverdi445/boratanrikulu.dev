@@ -1,0 +1,27 @@
+# dns ağacını ayakta tutan şey, cache'leme olayıdır.
+
+# dns değiştirildiğinde ağaca yayılması 24 saat sürer. Bunu engellemek için ttl süresi 30dk'a çekilir, böylece domain ile ilgili veriler server cache'lerinde 30 dk saklanır.
+
+SPAM: talep edilmemiş posta.
+
+a@ankara.edu.tr -> b@mit.edu
+
+1) pc'deki antivirüs tarafından kontrol edilir
+2) mail.ankara.edu.tr'e gider, eğer gönderici ankara.edu.tr'den ise epostayı alır. Ayrıca saat, başlık kontrolü vs de yapar.
+3) Ankara, MIT'e yollayacağında mit.edu gerçek bir alan adımı diye kontrol yapar.
+4) Ankara, MIT'nin MX(Mail Exchanger)'ını dns'den sorgular
+5) Posta SMTP ile yollanır
+6) MIT mail'i getiren sunucunun reverse DNS kaydı doğru mu diye kontrol eder
+7) SPF(Sender Policy Framework) kaydından bulunan bir domain üzerinden mi geliyor diye mi bakar. (Kabul edilen sunucular)
+8) Mail'in geldiği sunucu domain key ile örtüşüyor mu diye bakar
+9) Mail'i gönderen IP, RBL(kara liste) altında var mı
+	KARA LİSTEYE ALMA YÖNTEMLERİ
+		İhbar
+		Volume Control (olağan dışı bir aksiyon varsa kara listeye girebilir)
+	White List de oluşturulabilir. 
+		Direkt kabul etmesi sağlanır, kontrol yapılmadan.
+10) Eğer kontrollerden geçer ise MIT eposta'yı alır.
+11) Teslim aldığı postanın header ve body kısımları taranır. (Saat, başlık, belli kelimeler)
+12) Content Security Virüs taraması ve spam kontrolü yapılır. (content security) (puanlama yapılır, eğer belli bi düzeyin üstündeyse spam olarak kabul edilir. spam klasörüne konulur.)
+	Kullanıcı Bazında KaraListe, Content Security
+13) Tüm kontrollerden sonra kullanıcıya teslim edilir.

@@ -1,0 +1,92 @@
+dehşet düzeyde önemli bir not: anlamadık, kurstan sonra temelden çalış
+
+---
+
+## sunum 
+
+https://person.zettlina.com/sunum/dns/dns.html
+
+---
+
+DHCP: Belirli bir ip bloğundaki cihazların ip'lerin dağıtılmasını sağlayan bir protokol.
+
+https://en.wikipedia.org/wiki/File:DHCP_session.svg
+
+# DNS: Adres defteri. Herkesin bilgisarında tutmak yerine sunucuda tutup isimden ip, ipden isim çözümlemesinin yapılabileceği bir protokol.
+
+# DNS: 53(UDP) ama TCP de çalışabilir.
+
+$ host boratanrikulu.me
+
+# DNS dağıtık bir sistemdir.
+
+# Client'lar alan adını çözümlerken resolver ismi verilen bir sunucuya sorulur.
+
+# DNS sorgusunu yapmak için hangi resolver'a gideceğini /etc/resolve.conf'dan bakar.
+
+# Dünya üzerinde 12 tane ana root dns sunucu vardır. (icann) (.com'ın adresini tutan root filan gibi)
+
+# Bu root server'lardan alt dallara ayrılır. Seçtiğimiz resolver root server'a bizim yerimize sorguyu yapar ve bize geri döner
+https://en.wikipedia.org/wiki/File:Example_of_an_iterative_DNS_resolver.svg
+
+$ dig google.com
+
+	QUSTION : Sorulan Soru
+	ANSWER  : google'un ip adresi
+	AUTHORITY : google ip'lerini nereye sormak lazım onu görüyoruz
+	ADDITIONAL : ek bilgiler(?)
+	SERVER : bize neresi cevap veriyor onu görüyoruz
+
+$ dig google.com @1.1.1.1 (belirli resolver kullanmak)
+
+# Authority resolver tarafından gelen isteğe cevap verir.
+
+# SOA(Start of Authority). Teknik sorunlarda iletişim kurulacak kişinin e posta adresi yer alır.
+
+$ dig soa com.tr +short (bu bilgiler client tarafından kullanılmaz)
+
+---
+
+1. Domain Name Resolver
+
+A resolver is a program that resolves questions about names by sending those questions to appropriate servers and responding appropriately to the servers’ replies. In the most common application, a web browser uses a local stub resolver library on the same computer to look up names in the DNS. That stub resolver is part of the operating system. (Many operating system distributions use the BIND resolver library.) The stub resolver usually will forward queries to a caching resolver, a server or group of servers on the network dedicated to DNS services. Those resolvers will send queries to one or multiple authoritative servers in order to find the IP address for that DNS name.
+
+2. Domain Name Authority server
+
+An authoritative DNS server answers requests from resolvers, using information about the domain names it is authoritative for.  You can provide DNS services on the Internet by installing this software on a server and giving it information about your domain names.
+
+---
+
+# Master ve Slave DNS Sunucular
+
+Master sunucuya erişilememesi durumuna karşılık master'ın kopyası olan slave sunucular vardır.
+
+Slave sunucular Master'dan veri ister, tersi olmaz.
+
+Slave sunucular belli aralıklarla kontrol eder.
+
+Master sunucular veri değiştiğinde slave sunuculara bildirim gönderir.
+
+Bu işlemler soa kaydı üzerindne kontrol edilir. Slave sunucu master sunucunun soa kaydı ilerde ilse kopyalama işlemi olur.
+
+---
+
+## Bind
+
+DNS server olarak kullanırır. Resolver ya da Authority olarak hizmet verebilir.
+
+$ apt install bind9 unbound
+
+$ systemctl start unbound
+
+$ netstat -nlptu | grep ":53"
+
+$ dig google.com @localhost
+
+---
+
+## sunumda 68'den sonrasını yaptık
+
+---
+
+Dnssec dns'e bir eklentidir. Güvenlik sağlar.

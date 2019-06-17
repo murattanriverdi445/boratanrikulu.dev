@@ -1,0 +1,376 @@
+## LDAP (Lightweight Directory Access Protocol)
+## https://aydintd.net/centos-7de-openldap-sunucu-kurulumu-ve-ayarlanmasi/
+## eskiden x500'müş sonra geliştirilmiş, ldap olmuş.
+## info@aydintd.net
+
+# istemciler için ldap-tools ile komut satırı üzerinden sorgular yapabiliriz.
+
+---
+
+Diyelim bi şirket var, tüm bilgisayarlarda kullanıcıların hesaplarını açamayız o yüzden tek bir yerden yönetiriz. Tek bi yerden tüm kullanıcıları ekle/sil/değiştir yapabiliriz. Client'lar unix'deki kullanıcıları değil ldap'dan kullanıcıları çeker kendine.
+
+---
+
+# tcp kullanır.
+
+# LDAP Nedir ? (alıntı : http://www.bilgisayarmuhendisleri.com/sayfa.aspx?s=60)
+
+Dizin ve LDAP kavramları ,özellikle kurumsal ortamlarda sıkça karşılaştığımız kavramlardandır.Peki nedir bunlar ve ne işe yararlar? 
+Dizin(Directory): Belirli türden nesnelerden olusan küme ve bu küme üzerinde sorgulama imkanı sağlayan yapı şeklinde özetlenebilir.Aslında dizin, bir veritabanıdır ve genellikle okuma ve arama gibi amaçlar için düzenlenmiş/optimize edilmiştir.İlk akla gelen örnekler telefon rehberi uygulamaları, bir ağ üzerinde bulunan bilgisayarlar hakkında tutulan kayıtlar vb olabilir.  
+Hem veritabanında hem de dizin de bilgileri depolama vardır.Ama bu bilgilerin tutulma şeklileri farklıdır.  
+Normal bir veritabanı sisteminde verileri istenilen mantıkta ve yapıda tutmak mümkün iken, dizin mantığında bilgiler bir hiyerarşiye göre tutulur.Bu sebeble arama ve okuma işlemleri aynı işi yapan bir veritabanı uygulamasına gore daha performanslıdır denilebilir. Veritabanında rollback, transaction gibi kompleks işlemler desteklenirken dizin desteklemez. Yine veritabanı genelde dinamik iken dizin de statik bilgiler tutulur.Özetle veritabanı, veriler arasında bağlantıya ihtiyaç duyan uygulamalar için(ERP,Muhasebe gibi), dizin ise dağıtık çalışmaya ihtiyaç duyan uygulamalar için (kurumsal e-posta adres defteri, DNS sistemi gibi) tercih edilirler.
+
+LDAP : Açılımı Lightweight Directory Access Protocol olan LDAP, X.500 standardı ile tanımlanan dizin erişim protokolünün hafifletilmiş sürümüdür.İletişim protokolü TCP/IP dir.(DAP(Directory Access Protocol), sunucu ve istemci arasındaki haberleşmeyi tanımlar.OSI modelinin uygulama katmanında çalışan bir protokoldür.Çalışabilmesi için tüm OSI katmanlarına ihtiyaç duyar.)
+
+Ancak ihtiyaçlar geliştikçe X.500 (dolayısyla DAP protokolü) yetersiz kalmaya başladı.Bu aşamada LDAP geliştirildi.Önceleri X.500 dizin servislerine ulaşmak için düşünülmüş ise de sonradan kendisi bir dizin servisi haline geldi.
+X.500 :
+
+    OSI protokol kümesini kullanırken LDAP TCP/IP protokolünü kullanır.
+    Daha karmaşıktır.
+    OSI kullanmasında dolayı özellikle masaüstü ve küçük sistemler için uygun değildir.
+
+LDAP ise çok kaynak istemez ve TCP/IP ye ihtiyaç duyduğundan yaygın olarak kullanılabilmektedir.LDAP Client-Server mimarisi aşağıdaki gibi özetlemek mümkündür.
+
+---
+
+$ nano /etc/hostname (ldap.aydintd.net)
+$ nano /etc/hosts (192.168.42.97 ldap.aydintd.net)
+
+# ldap -> 389
+# ldaps -> 636
+
+firewall-cmd(daemon)
+
+$ firewall-cmd --state (running demeli)
+$ firewall-cmd --get-active-zones (zone isimlerini görüyoruz, biz public zone'u kullanıcaz)
+$ firewall-cmd --permanent --zone=public --add-service=ldap
+$ firewall-cmd --permanent --zone=public --add-service=ldaps
+$ firewall-cmd --reload
+
+# herşeyin yolunda olduğu aşağıdaki gibi kontrol edebilirsin
+$ firewall-cmd --zone=public --list-all
+# ya da direkt iptables üzeriden kontrol edebiliriz
+$ iptables -L
+
+# selinux kullanırken her servisten sonra işlem yapmak gerektiği için kapatıyoruz. 2. seviye konusu değil selinux. Aslında selinux'u disable etmemek gerekir.
+$ getenforce (açık olduğunu görürüz)
+$ setenforce 0
+$ getenforce (loglandığını ama çalışmadığını gördük ama biz tamamen kapatmak istiyoruz.)
+$ nano /etc/sysconfig/selinux (SELINUX=disabled)
+
+# selinux örneğin apache kullanıcısı sadece kendi dizinine yazabilsin (dosya izinleri izn verse bile başka yerlere yazamamaz)
+
+# neden istemci ve sunucu aynı yere kuruluyor, default olan ayağa kaltıktan sonra entry'ler girebilmek için client'a da ihtiyacımız var çünkü tool'ları da kullanıcaz. Mesela mysql-client kurup mysql yazıp gireriz gibi.
+
+$ yum install openldap-servers openldap-clients openldap -y
+
+$ cp /usr/share/openldap-servers/DB_CONFIG.example /var/lib/ldap/DB_CONFIG
+
+$ chown ldap. /var/lib/ldap/DB_CONFIG
+$ systemctl start slapd
+$ systemctl enable slapd
+$ ps aux | grep slapd
+$ netstat -ntlpd
+(::: olanlar ipv6 için ::: all :: local)
+
+# LDAP ayarlamalarında iki farklı yol vardır. Bunlardan ilki tek dosyada yazmak. İkincisi /etc/openldap/slapd.d altında ayrı ayrı dosyalar halinde oluşturmak. OpenLDAP geliştiricileri ilkini tavsiye ediyor, biz de öyle yapıcaz. Bu ayarlar daha sonra db'e basılıyor.
+
+# Default parola set edilmemiş gelir.
+$ slappasswd (parola verdik o da bize openldap servisinde kullanabileceğimiz bir özet fonksiyonu verdi.)
+# Ardından bunu /etc/ldif_files/change_rootpw.ldif'e yazarız.
+
+$ mkdir /root/ldif_files ; cd /root/ldif_files
+$ nano change_rootpw.ldif
+
+	dn: olcDatabase={0}config,cn=config
+	changetype: modify
+	add: olcRootPW
+	olcRootPW: {SSHA}Pum7Es/vIU421vpe8owGdUjB0JpJggrR
+
+# dn dediğiniz bir ağaç
+# hangi işlemi yapmak istiyorsak changetye ile bunu belirtiriz
+# add ile nereye işlemi yapacağımız belirtiriz
+# ardından ilgili değer yazılır
+
+# ldapi:/// aslında bir socket
+$ ldapadd -Y EXTERNAL -H ldapi:/// -f change_rootpw.ldif
+	
+	SASL/EXTERNAL authentication started
+	SASL username: gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth
+	SASL SSF: 0
+	modifying entry "olcDatabase={0}config,cn=config"
+
+# Bunlar kolacya görüntülemek için dosyada da gösterilir ama buradan değiştirmemek gerekir. Elle değiştirilirse ağaca yansımaz.
+$ cd /etc/openldap/slapd.d/cn\=config
+$ ls -l
+$ nano /etc/openldap/slapd.d/cn=config.ldif
+$ nano olcDatabase={0}config.ldif
+
+# Default şemalar vardır. Bunları kullanmak için ağaca basmamaız gerekir. Bazı ön tanımlı olara ağaca basılı olur.
+$ ls -l /etc/openldap/schema/
+
+# Mesela 'carLicense' var burada plaka saklayabilirisiz gibi gibi. Bazıları opsiyonel bazıları zorunlu(mandatoryy)
+$ nano /etc/openldap/schema/inetorgperson.ldif
+
+# mesela cn=peercred,cn=external,cn=auth ifadesi en üstte auth varmış ondan sonra external ondan sonra peercred
+
+# doküman bilgileri vs.
+$ ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/openldap/schema/cosine.ldif
+# sistem bilgileri için 
+$ ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/openldap/schema/nis.ldif
+# kullanıcı bilgileri için
+$ ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/openldap/schema/inetorgperson.ldif 
+# parola sınırlamaları yapmak için
+$ ldapadd -Y EXTERNAL -H ldapi:/// -f /etc/openldap/schema/ppolicy.ldif
+
+---
+
+## LDAP domain adı ile paralel çalışır.
+
+dosyaları aldık hocadan.
+
+(parola hash'ini değiştirmeyi unutma)
+$ nano 02-chdomain.ldif
+# dc dedidiğimiz domain'imiz.
+# ikinci dc de uzantısı (.net gibi)
+# domain aynı zaten değiştirmedim
+# suffix : dc=aydintd,dc=net , rootdn : cn=admin,dc=aydintd,dc=net olacak şekilde ayarladık.
+
+# ldapmodify hali hazırda olan bir satırı değiştireceğimiz için
+$ ldapmodify -Y EXTERNAL -H ldapi:/// -f chdomain.ldif
+
+	SASL/EXTERNAL authentication started
+	SASL username: gidNumber=0+uidNumber=0,cn=peercred,cn=external,cn=auth
+	SASL SSF: 0
+	modifying entry "olcDatabase={1}monitor,cn=config"
+	modifying entry "olcDatabase={2}hdb,cn=config"
+	modifying entry "olcDatabase={2}hdb,cn=config"
+	modifying entry "olcDatabase={2}hdb,cn=config"
+	modifying entry "olcDatabase={2}hdb,cn=config"
+
+# dn dedikleri ağaç yolu anlamında
+
+$ nano 03-basedomain.ldif
+
+|__ cn=config
+        |________olcDataBase{0}config 
+        |________olcDataBase{1}config
+        |_
+        ._
+        ._
+        ._
+|__ dc=aydintd, dc=net
+        |________o=aydin
+        |________cn=admin,dc=aydintd,dc=net
+                    |_______ cn=admin
+                    |_______ description=Directory Manager
+        |________ou=Poeple, dc=aydintd, dc=net
+        |________ou=Group, ou=Poeple, dc=aydintd, dc=net
+        .
+        .
+        .
+
+# -Wx parola sorgusu için
+$ ldapadd -Wx -D cn=admin,dc=aydintd,dc=net -f 03-basedomain.ldif
+
+	Enter LDAP Password: 
+	adding new entry "dc=aydintd,dc=net"
+	adding new entry "cn=admin,dc=aydintd,dc=net"
+	adding new entry "ou=People,dc=aydintd,dc=net"
+	adding new entry "ou=Group,dc=aydintd,dc=net"
+
+# Şuana kadar boş bir ağaç oluşturduk
+
+---
+
+# Şimdi sorgu yapıcaz
+# Ağaçtaki herşeyi görüntülüyoruz
+$ ldapsearch -Wx -D cn=admin,dc=aydintd,dc=net -b "dc=aydintd,dc=net"
+
+---
+
+## SSL
+
+$ cd /etc/pki/tls/
+$ echo "03" >> file.srl
+$ openssl req -out ca.pem -new -x509
+$ openssl genrsa -out server.key 1024
+$ openssl req -key server.key -new -out server.req 
+$ openssl x509 -req -in server.req -CA ca.pem -CAkey privkey.pem -CAserial file.srl -out server.pem
+
+$ cat server.pem
+$ mv server.key private/
+$ mv ca.pem server.pem certs/
+
+Ardından 
+$ nano /etc/sysconfig/slapd (SLAPD_URLS="ldapi:/// ldap:/// ldaps:///")
+$ systemctl restart slapd
+
+$ nano /root/ldif_files/04-mod_ssl.ldif
+
+	dn: cn=config
+	changetype: modify
+	replace: olcTLSVerifyClient
+	olcTLSVerifyClient: allow
+	-
+	replace: olcTLSCACertificateFile
+	olcTLSCACertificateFile: /etc/pki/tls/certs/ca.pem
+	-
+	replace: olcTLSCertificateFile
+	olcTLSCertificateFile: /etc/pki/tls/certs/server.pem
+	-
+	replace: olcTLSCertificateKeyFile
+	olcTLSCertificateKeyFile: /etc/pki/tls/private/server.key
+
+$ ldapmodify -Y EXTERNAL -H ldapi:/// -f /root/ldif_files/04-mod_ssl.ldif
+
+# Ardından servis tekrar başlatılır.
+$ systemctl restart slapd
+
+# portlara baktığınızda 636 portu slapd tarafından dinleniyor olmalı
+$ netstat -ntlpd
+
+# Ardından ssl üzerinden bir sorgu yapmayı deniyoruz.
+$ ldapsearch -LLL -H ldaps://localhost -Wx -D "cn=admin,dc=aydintd,dc=net" -b "dc=aydintd,dc=net" "(objectClass=*)"
+
+	ldap_sasl_bind(SIMPLE): Can't contact LDAP server (-1)
+
+# Şeklinde bir hata verecek. Çünkü ssl'i biz kendimiz imzaladık, belli bir otorite tarafından imzalanmadı. Bu yüzden TLS_REQCERT 'i allow'lamalıyız.
+
+# client ayarları düzeltilir.
+$ nano /etc/openldap/ldap.conf (TLS_REQCERT allow)
+
+# sorun çıkarsa restart çekebilirsin
+$ ldapsearch -LLL -H ldaps://localhost -Wx -D "cn=admin,dc=aydintd,dc=net" -b "dc=aydintd,dc=net" "(objectClass=*)"
+
+	Enter LDAP Password: 
+	dn: dc=aydintd,dc=net
+	objectClass: top
+	objectClass: dcObject
+	objectClass: organization
+	o: aydintd
+	dc: aydintd
+
+	dn: cn=admin,dc=aydintd,dc=net
+	objectClass: organizationalRole
+	cn: Admin
+	description: Directory Manager
+
+	dn: ou=People,dc=aydintd,dc=net
+	objectClass: organizationalUnit
+	ou: People
+
+	dn: ou=Group,dc=aydintd,dc=net
+	objectClass: organizationalUnit
+	ou: Group
+
+---
+
+# LDAP'ı konsoldan yönetmek baya zor. Ondan dolayı Apache Directory Studio isimli bir program var. Eclipse'den forklanmış. (client)
+
+grafik işte, kurcalayarak yaparsın (video olarak alındı)
+
+---
+
+$ vim 06-addgroup.ldif
+# 10000 olma sebebi işletim sisteminin default id'leri ile çakışmaması için
+$ ldapadd -Wx -D cn=admin,dc=aydintd,dc=net -f 06-addgroup.ldif
+
+	adding new entry "cn=sysadmin,ou=Group,dc=aydintd,dc=net"
+
+	adding new entry "cn=developer,ou=Group,dc=aydintd,dc=net"
+
+	adding new entry "cn=manager,ou=Group,dc=aydintd,dc=net"
+
+---
+
+$ vim 07-adduser.ldif
+
+$ ldapadd -Wx -D cn=admin,dc=aydintd,dc=net -f 07-adduser.ldif
+
+	adding new entry "uid=adoyak,ou=People,dc=aydintd,dc=net"
+
+	adding new entry "uid=bbuyukakyol,ou=People,dc=aydintd,dc=net"
+
+	adding new entry "uid=dfisek,ou=People,dc=aydintd,dc=net"
+
+---
+
+dn: uid=bora,ou=People,dc=aydintd,dc=net
+changetype: add
+objectClass: inetOrgPerson
+objectClass: top
+objectClass: posixAccount
+objectClass: shadowAccount
+objectClass: organizationalPerson
+objectClass: person
+description: bora
+cn: Bora Tanrikulu
+sn: Tanrikulu
+uid: bora
+uidNumber: 10010
+gidNumber: 10000
+homeDirectory: /home/bora
+mail: bora@linux.org.tr
+loginShell: /bin/bash
+userPassword: {SSHA}ot8sZ8sNSHJ5TzLnt1lvlcTw2hR9WRub
+
+---
+
+/etc/shadow'da sha512 şeklinde tutulmaz
+
+---
+
+bir kullanıcı girdiğinde yeni parola girdirmeyi nasıl sağlarsın ?
+
+chage
+
+---
+
+bir tane debian makine ayağ kaldırdık. bu debian makineyi öyle bir ayarlıcaz ki, centos'tan aldığı bilgiler ile login olunabilecek.
+
+$ cd /etc/pam.d/
+$ vim common-account
+
+libpam-ldap
+sssd
+
+---
+
+debian manifesto
+
+---
+
+$ apt install sssd sssd-ldap sssd-tools libpam-sss libnss-sss
+$ nano /etc/sssd/sssd.conf (hosts'a ekle) (hocanın dosyalarında var) (nss getent passwd filan yapmak için - /etc/nsswitch.conf)
+$ systemctl restart sssd.service
+$ getent passwd
+$ getent group
+$ login bora
+$ echo "$SHELL"
+$ groups
+
+---
+
+# herşeyi görmek için
+$ slapcat | less
+
+--- 
+
+kullanıcı klasörleri oluşmadı onu düzeltcez
+
+$ nano /etc/pam.d/common-account (account optional pam_mkhomedir.so skel=/etc/skel umask=0077)
+$ nano /etc/pam.d/common-session (session optional pam_mkhomedir.so skel=/etc/skel umask=0077)
+
+# ardından test ettik sorunsuz oldu
+$ login
+
+---
+
+	db: cn=config
+	replace: olcLogLevel
+	olcLogLevel: -1
+
+$ ldapmodify -Y EXTERNAL -H ldapi:/// -f ldif_files/08-logging.ldif
+
+$ ldapsearch -Y EXTERNAL -H ldapi:/// -b "cn=config"

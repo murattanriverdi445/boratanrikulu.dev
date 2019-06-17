@@ -1,0 +1,509 @@
+# http://topluluk.ozguryazilim.com.tr/wp-content/sunumlar/sistemyonetimi-sunumlar/apache_web_sunucusu.html#1
+
+# apache en çok kullanılan web sunucusu,
+# ondan sonra nginx en çok kullanılan.
+
+# en yaygın kullanılan modül mod-php
+
+# NCSA Temelli "A Patchy Server" -→ Apache
+
+---
+
+# APACHE2 KURDUK
+
+$ yum install httpd
+$ systemctl start httpd
+$ systemctl enable httpd
+$ firewall-cmd --permanent --zone=public --add-service=http
+
+---
+
+# Ayar dosyaları konumları.
+    /etc/httpd/conf/httpd.conf
+
+    /etc/httpd/conf.d/*.conf
+
+    /etc/sysconfig/httpd
+
+---
+
+Çalışma Modelleri
+
+MPM: Multi-Processing Modules
+
+    Prefork (Öntanımlı) -> Her bağlanan için bir süreç açılır. Apache1 ile aynı.
+
+    Worker (Threaded) -> Her bağlanan için ayrı bir süreç açılmaz. Thread olarak çalışır. Ama her modülün thread desteği yok.
+
+    Event (Threaded - Apache 2.4+) -> Worker'ın geliştirilmişi.
+
+---
+
+Modüllerin çoğu dinamik olarak yüklenir. Çünkü statik olarak eklenenlerin ayarları zor olur.
+
+---
+
+# Statik modülleri görüntülemek için
+$ httpd -l
+	Compiled in modules:
+	  core.c
+	  mod_so.c
+	  http_core.c
+---
+
+LoadModule auth_basic_module modules/mod_auth_basic.so
+
+---
+
+Apache’nin Kendi Modüllerinden Örnekler
+
+    mod_dav (Distributed Authoring and Versioning) -> Sunulan sayfaları mount edilip, sadece okuma değil, yazma imkanı da sağlanır. Dosyalar editlenebilir. FTP gibi.
+
+    mod_deflate -> sıkıştırmak için
+
+    mod_ldap
+
+    mod_speling -> hatalı yazımları düzeltir (linki düzeltir)
+
+    mod_substitute
+
+    mod_userdir -> kullanıcı ev dosyaları içinde bulunan public_html dosyasını gösterir.
+
+    mod_usertrack -> bağlanan kullanıcıya bir cookie üreterek yollar ve kaç tane kullanıcının bağlandığını tespit eder.
+
+---
+
+Yaygın Ek Modüller
+
+    mod_pagespeed -> Web optimizasyonu
+
+    mod_security -> Güvenlik (WAF)
+
+    suhosin -> PHP Güvenliği
+
+    mod_php -> PHP Dili
+
+    mod_wsgi -> Python (Uygulama sunucu olmadan direkt yorumlanabilir olur.)
+
+    mod_perl -> Perl
+
+    mod_jk -> Servlet
+
+# Eğer herşey modül olursa, web sunucusuna restart çekilecek ise tüm herşey restart çeker. Uygulama sunucusu olsa, neye lazımsa ona restart çekilir.
+
+---
+
+ServerRoot /etc/httpd -> Configlerin, modüllerin dosyalarının yerini gösterir
+
+DocumentRoot /var/www/html -> Root dizinin neresi olduğunu söyler.e
+
+ServerName ozguryazilim.com.tr -> Sunucuya hangi domain ile bağlanılacağını belirtir.
+
+ServerAlias www.ozguryazilim.com.tr xn—​zgryazlm-m4a6d07ab.com.tr www.xn—​zgryazlm-m4a6d07ab.com.tr -> başka isim ile girildiğinde yönlendirmek için. (ascii tablosundaki ilk 127 karakter kullanılır domain'lerde) (aslında hepsi özgüryazılım.com.tr olmuş oluyor)
+
+Listen 80 -> apache'nin hangi portu dinleyeceğini belirtir.
+Listen 88.198.33.142:80 -> belli bir ip'yi dinlemesini sağlanabilir.
+Listen [2001:db8::a00:20ff:fea7:ccea]:80
+
+Listen 192.168.1.18:8443 https -> Bellir bir ip ve portundan bellir bir protokolü dinle.
+
+# Aynı sunucuda bir çok website yayını yapılabilir.
+
+---
+
+<Directory /> -> /var/www/html içindeki her şey
+    Options FollowSymLinks -> Link'leri takip etsin anlamında
+    AllowOverride None -> htacces ile hiç bir ayarı ezmesin 
+</Directory>
+
+<DirectoryMatch /[a-d].*> -> /var/www/html içindeki a ve d ile başlayan klasörler.
+    Options -FollowSymLinks -> "-" ile ayar kapatılabilir.
+    AllowOverride All -> htaccess ile tüm ayarları ezmesine izin verir
+</DirectoryMatch>
+
+---
+
+htaccess kulanılması gereken bazı nedenler var
+
+	1) Bazı uygulamalar .htaccess'e yazar. htaccess kapatılırsa oraya yazılmasının bir anlamı olmaz ve elle işlem yapılması gerekir. (ör: wordpress)
+	2) Web geliştiricilere ftp ile bağlantıklarında .htaccess'den düzenleme yapabilme imkanı vermek.
+	3) Dizin taşınması durumunda conf dosyasından konumları tekrar girmek gerekir, htaccess'de böyle olmaz çünkü o da taşınmış oluyor, ayarlar taşınmış olur.
+
+---
+
+# Dosya başına da ayar yapılabilir.
+
+<Files "wp-login.php"> -> Sadece belli ip'lerden gelen kullanıcılarına izin ver denilerek güvenlik sağlanabilir.
+    Order allow,deny
+    Deny from all -> kimse erişemesin
+</Files>
+
+<FilesMatch "\.(gif|jpe?g|png)$"> -> Aynı işlem bir çok dosyaya da yapılabilir.
+    # …​
+</FilesMatch>
+
+---
+
+<Location /sunucu-durumu>
+    SetHandler server-status
+    Order deny,allow -> Önce hangi ayarın geleceğini belirtir.
+    Deny from all
+    Allow from 192.168.1.0/24 -> Belli bir ağ'dan kabul, diğer herkesi denny et.
+</Location>
+
+<LocationMatch "/(extra|special)/data"> -> /extra/data ve /special/data' ı eşler
+    Require all denied -> apache 2.4 üzerinde bu şekilde yazılır deny from all
+</LocationMatch>
+
+---
+
+<Proxy *>
+    #…​
+</Proxy>
+<ProxyMatch /+)>
+    #…​
+</ProxyMatch>
+
+<VirtualHost *:80> ->  Aynı sunucuda birden fazla website için
+    #…​
+</VirtualHost>
+
+---
+
+DirectoryIndex index.html index.php -> Hangi sıra ile otomatik olarak çalıştırma yapılacağını belirtir.
+
+    DirectoryIndex’te tanımlı dosyayı gösterir.
+
+    Tanımlı dosya yoksa dizinde Indexes özelliği incelenir.
+
+    Indexes yetkisi varsa dosya listesi gösterilir.
+
+    Indexes yetkisi yoksa "403 Forbidden" döndürür.
+
+---
+
+    ServerTokens Full -> Apache/2.2.15 (Unix) PHP/4.3.3
+
+    ServerTokens Minimal -> Apache/2.2.15
+
+    ServerTokens Prod -> Apache
+
+---
+
+    StartServers 10 -> Apache başlatıldığında hemen 10 tane süreç aç.
+
+    MinSpareServers 5 -> Boştaki sunucu sayısı en az 5 olmalı
+
+    MaxSpareServers 20 -> Boştaki sunucu sayısı en fazla 20 olmalı
+
+    MaxRequestsPerChild 40000 -> Bir sunucu kaç kere kullanıldıktan sonra çöpe atılmalı. Şişme filan olmasın diye.
+
+    MaxClients 150 -> Belirli bir süreç sınırı getirir. (Ram'i doldurmayacak kadar bir pay olmalı ki swap'e düşmesin)
+
+    ServerLimit 256 -> MaxClients ile beraber hesaplanır.
+
+---
+
+    KeepAlive On -> Client ile bağlantıyı direkt olarak koparmaz. Böyle olmasa her seferinde tekrar bağlantı kurulacağı için işlem yükü artar. -> Sadece sunucu değil client tarafı için de yararlıdır, sayfaları daha hızlı yükler.
+
+    KeepAliveTimeout 15 -> Sunucu client'e göndereceğini şeyi gönderidikten sonra 15 sn daha bağlı durur.
+
+    MaxKeepAliveRequests 4000
+
+---
+
+DDOS saldırısı network ile ilgilidir, apache ile ilgili değil doğrudan.
+
+---
+
+AccessFileName .htaccess -> htaccess ' i etkinleştirir.
+
+Dizin için "AllowOverride All" olmalı.
+
+---
+
+<Files ~ "^\.ht"> -> htaccess dosyalarına web üzerinden erişimi engeller
+    Order allow,deny
+    Deny from all
+    Satisfy All
+</Files>
+
+---
+
+AllowOverride ayarının değerleri:
+
+    All -> Tüm
+
+    AuthConfig -> Doğrulama
+
+    FileInfo -> Dosyalara erişim
+
+    Indexes -> Dizin indeksini oluşturma
+
+    Limit -> Erişim kısıtlama
+
+    Options -> Dizin özellikleri
+
+---
+
+htaccess ile yapılan ayarlar direkt olarak etkili olur.
+
+---
+
+Avantajları
+
+    httpd.conf’u düzenleme yetkisi gerektirmez
+
+    Ayarlar anında etkin olur
+
+    Dizin başka yere taşınırsa ayarlar da taşınır
+
+Dezavantajları:
+
+    Performansı düşürür
+
+    Güvenliği azaltır
+
+---
+
+Dizindeki dosyalar listenmesini istemiyorsak, mod_autoindex modülü kaldırıalabilir.
+
+---
+
+ErrorDocument 403 /403.php
+ErrorDocument 404 http://ozguryazilim.com.tr
+ErrorDocument 503 /cokyogunumcok.php
+…​
+
+---
+
+AddDefaultCharset utf-8 -> birisi aksini söyleyene kadar tüm sayfaları utf-8 ile bas
+
+---
+
+Alias /phpmyadmin /usr/share/phpmyadmin -> localhost/phpmyadmin için root yeri /usr/share/phpmyadmin olacak şekilde
+AliasMatch ^/phpmyadmin/(.*)$ /usr/share/phpmyadmin/$1 -> 
+
+---
+
+Redirect 301 /eski_yeri.html http://www.ozguryazilim.com.tr/yeni_yeri.php
+RedirectMatch ^/images/(.*)$ http://images.ozguryazilim.com.tr/$1
+
+-> yönlendirmek için, adı değiştiğinde vs. yapılır
+-> 301 geçici olarak taşındı, 302 kalıcı olarak taşındı anlamında
+
+---
+
+Rewrite ile https'e zorlanabilir
+
+RewriteCond %{HTTPS} !=on [NC] -> https değilse
+RewriteRule ^.*$ https://%{SERVER_NAME}%{REQUEST_URI} [R,L] -> https'e yönlendir
+
+---
+
+Ne zaman rewrite kullanılmamalı
+
+Basit yönlendirme işlemleri (Redirect ile yapılabilecekleri yapma)
+
+Basit / URL dizin eşleştirmesi (Alias /kebaplar /var/www/yemekler)
+
+Toplu sanal host oluşturma işlemleri (mod_vhost_alias ya da mod_macro)
+
+Basit proxy işlemleri (mod_proxy)
+
+---
+
+<Directory "/var/www/web_sitesi/admin">
+  AllowOverride None
+  Options None
+  Order deny,allow
+  Deny from all
+  Allow from 192.168.1.0/24
+</Directory>
+
+---
+
+htpasswd -c /var/www/test.22dakika.org/.htpasswd -> şifrelenmiş olarak oluşur
+
+<Directory /var/www/test.22dakika.org>
+  AuthType Basic
+  AuthName "Test Alani: Tas Dusebilir Balrog Cikabilir"
+  AuthUserFile /var/www/test.22dakika.org/.htpasswd -> bu dosyayı istediğimiz yere koyabilir
+  Require valid-user -> parola ister
+</Directory>
+
+-> Aynısı tek bir dosya için de geçerlidir.
+-> Birden fazla dosya için de geçerlidir.
+
+---
+
+ErrorDocument 403 http://www.ozguryazilim.com.tr/bakim-yapiliyor
+Order deny,allow
+Deny from all
+Allow from 195.112.152.2
+
+-> Belli bir ip hariç herkese bakım sayfası göster
+
+---
+
+SSL için mod_ssl modülü kurulur.
+
+yum install mod_ssl
+service httpd restart
+lokkit -p 443:tcp
+
+modül yüklediğinde otomatik olarak kendi conf dosyasını conf.d/ altına atar.
+
+SSL sertifikasının şifrelemeye katkısı yoktur. Sertifika kimlik görevi görür. Karşımızdakinin gerçekten de gitmek istediğimiz olduğu belirtir. Yani Man in The Middle saldırılarına karşı bir çözüm.
+
+Tarayıcıların kendi kabul ettiği otoriteler vardır. Bunlara bakarak karşılaştırır.
+
+İstemciye ve Sunucuya hakimsek, istemci tarafında da sertifika browser'a eklenip SSL kullanılabilir.
+
+---
+
+SSL ile şifrelendiğinde link'in alt şeyleri gözükmez
+
+google.com/?p=asşldkmasd
+
+gözükmez
+
+google.com gözükür.
+
+---
+
+PHP için mod-php kurulur
+
+Artılar-Eksiler:
+
+    Modülün kurulumu kolay, dağıtımlarda prefork öntanımlı.
+
+    Ayrı uygulama sunucusunda sorun belirleme daha kolay.
+
+    Modülde uygulama performansı daha yüksek. (ne kadar?)
+
+    Modül olduğunda, uygulamadaki bir sorun tüm web servisini etkiliyor.
+
+-
+
+    Modülün eklenmesi (her modül gibi) Apache’nin bellek tüketimini arttırıyor.
+
+    Ayrı servis olduğunda, farklı sanal host’lar için farklı kullanıcılarda çalışan süreçler tetiklenebiliyor.
+
+    Ayrı servis olunca, PHP servisi tüm web servisi durdurulmadan tekrar başlatılabiliyor.
+
+    Ayrı servis olunca, birden fazla PHP sürümü aynı sunucuda kolaylıkla çalıştırılabiliyor.
+
+---
+
+MYSQL için php-mysql modülü de kurulur
+
+---
+
+Modül yükleyince, restart çekmek gerekir, reload yemez
+
+---
+
+VirtualHost için name aktifleştirmek önemlidir
+
+NameVirtualHost *:80
+NameVirtualHost *:443
+
+<VirtualHost *:80> -> Temel VirtualHost tanımı
+  ServerName www.alanadi.com.tr
+  DocumentRoot /var/www/alanadi.com.tr
+</VirtualHost>
+
+---
+
+Örnek bir VirtualHost ayarı
+
+<VirtualHost *:443>
+  SSLEngine on
+  SSLCertificateFile /etc/pki/tls/certs/alanadi.crt
+  SSLCertificateKeyFile /etc/pki/tls/private/alanadi.key
+
+  DocumentRoot /var/www/alanadi.com.tr
+  ServerName www.alanadi.com.tr
+  ServerAlias alanadi.com.tr alanadi.com www.alanadi.com
+
+  <Directory /var/www/alanadi.com.tr>
+  AllowOverride FileInfo
+  </Directory>
+
+  CustomLog /var/log/httpd/alanadi.com.tr-access_log combined
+  ErrorLog /var/log/httpd/alanadi.com.tr-error_log
+
+  php_admin_value open_basedir /var/www/alanadi.com.tr:/tmp
+  php_value upload_max_filesize 32M
+  php_value post_max_size 32M
+</VirtualHost>
+
+---
+
+PROXY
+
+proxy_module ve proxy_http_module
+
+    ProxyRequests Off
+
+    ProxyPass /app1 http://192.168.1.5:8080/ -> bi adrese istek geldiğinde onu bir uygulama sunucusuna yönlendirir
+    ProxyPassReverse /app1 http://192.168.1.5:8080/ -> iletişimi sağlamak için işlemin tersi
+
+Tersine proxy ile uygulama sunucusundali SSL yükü kaldırılabilir, çünkü kendi iç ağımız olmuş olacak.
+
+    AJP1 -> mod_proxy_ajp
+
+    SSL -> mod_proxy_connect
+
+    FastCGI -> mod_proxy_fcgi
+
+    FTP -> mod_proxy_ftp
+
+    HTTP -> mod_proxy_http -> tercih edilesi
+
+    SCGI -> mod_proxy_scgi
+
+    WS and WSS (Web-sockets) -> mod_proxy_wstunnel
+
+---
+
+<VirtualHost *:443> -> Uygulama sunucu üzerindeki şifreleme yükünü kaldırır.
+  RequestHeader set X-Forwarded-Proto "https"
+  …​
+</VirtualHost>
+
+---
+
+PROXY ile yük dengelemek için
+
+proxy_balancer_module
+
+    <Proxy balancer://kuluster>
+      BalancerMember http://192.168.1.11
+      BalancerMember http://192.168.1.12
+    </Proxy>
+    ProxyPass /test balancer://kuluster/
+
+Ağırlık belirlencek ise
+
+    <Proxy balancer://kuluster>
+      BalancerMember http://192.168.1.11 loadfactor=20
+      BalancerMember http://192.168.1.12 loadfactor=5
+      ProxySet lbmethod=byrequests
+    </Proxy>
+    ProxyPass /test balancer://kuluster/
+
+Sticky Session (yapışık oturum)
+
+    Header add Set-Cookie "ROUTEID=.%{BALANCER_WORKER_ROUTE}e; path=/" env=BALANCER_ROUTE_CHANGED
+    <Proxy balancer://kuluster>
+      BalancerMember http://192.168.1.11 route=1
+      BalancerMember http://192.168.1.12 route=2
+      ProxySet stickysession=ROUTEID
+    </Proxy>
+    ProxyPass /test balancer://kulster
+
+---
+
+

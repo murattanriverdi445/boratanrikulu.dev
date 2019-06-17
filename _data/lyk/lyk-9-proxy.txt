@@ -1,0 +1,63 @@
+
+
+| Client | ------> | PROXY | ------> | Server |
+
+1) Proxy (hiç ellemez)
+2) Forward Proxy
+3) Reverse Proxy (İstekleri dağıtır, yük dengelemek amaçlı kullanılır.)
+	Yükü dengeler
+	Saldırı önlemi
+	SSL hızlandırma
+	Sıkıştırma
+	Caching
+
+ISP'ler içerik filtrelemek amaçlı proxy kullanır.
+
+---
+
+5651
+
+---
+         ---------
+varnish          |
+haproxy          |
+nginx            |    HTTP/WEB Proxy (Layer 7)
+apache           |
+squid            |
+         ---------
+---
+
+CGI reverse proxy örneği olarak verilebilir.
+
+NAT'lar da aslında bir reverse proxy'dir. (Layer 3'te çalışır)
+
+---
+
+SOCKS Proxy, Layer5'de çalışır. TCP - UP paketlerini proxy'ler. Session Layer'da olduğu için http filan diye anlamaz, herşeyi yönlendirir.
+
+ssh ile socks proxy yapılabilir. (ssh -D 8080 user@host) (firefox üzerinde )
+shadow proxy
+
+---
+
+DNS Proxy dns isteklerini bir proxy'den geçirir. DNS'i cache'ler, blocklar filan.
+
+---
+
+nginx ile reverse proxy ypaılabilir.
+
+---
+
+haproxy
+
+---
+
+squid forward proxy olarak kullanılabilir.
+$ yum install squid
+$ nano /etc/squid/squid.conf
+
+	acl yasak dstdomain google.com  # google.com down
+	http_access deny !Safe_ports
+	http_access deny yasak 
+
+hata ekranı /usr/share/squid/errors/ altında

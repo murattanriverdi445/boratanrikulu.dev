@@ -1,0 +1,16 @@
+# wordpress kurulumu yaptık.
+
+# Linux sistemlerde dosya uzantısının bir anlamı yoktur.
+
+$ asldaisd
+$ echo $?
+
+$ ls -l
+$ echo $?
+
+# stdin 0
+# stdout 1
+# stderr 2
+
+# wordpress yedeği alan bir betik yazdık
+# https://github.com/boratanrikulu/wordpress-backup.sh

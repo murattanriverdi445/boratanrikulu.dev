@@ -1,0 +1,12 @@
+# https://www.slideshare.net/ThamerAlamery/intserv-diffserv
+# http://tldp.org/HOWTO/Traffic-Control-HOWTO/index.html
+# http://web.opalsoft.net/qos/default.php?p=linux101-ds
+
+Differentiated Services -> paylaştırır
+
+Integrated Services -> reserve eder
+
+Web trafiği için kullanıcıya başta yüksek sonra düşük verilebilir. Sayfanın açılma hızı çok artar.
+
+Ring Buffer'da dolmak yoktur. Döne döne üstüne yazar.
+

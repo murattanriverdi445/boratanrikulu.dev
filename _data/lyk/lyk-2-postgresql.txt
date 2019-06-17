@@ -1,0 +1,85 @@
+x# https://yum.postgresql.org/
+# https://yum.postgresql.org/repopackages.php#pg10
+
+# repo adresi ekler
+$ yum install https://download.postgresql.org/pub/repos/yum/10/redhat/rhel-7-x86_64/pgdg-centos10-10-2.noarch.rpm
+
+# paketi yükler
+$ yum install postgresql10-server
+
+# database class'larını oluşturur
+$ /usr/pgsql-10/bin/postgresql-10-setup initdb
+
+# postgre'yi başlatmak için
+$ systemctl start postgresql-10.service
+
+# postgres kullanıcısına geçer
+$ su - postgres
+
+# port default değil ise -p PORT ile belirlenir
+$ psql
+
+# deneme adında bir database oluşturur
+$ CREATE DATABASE example;
+
+# \c ile connect yapılır
+$ \c example;
+
+# a1 tablosunu b alacak şekilde oluşturur
+$ CREATE TABLE a1(b char);
+
+# insert yapar
+$ INSERT INTO a1 VALUES('a');
+
+# 5 karakterlik veri alan a2 tablosunu oluşturur
+$ CREATE TABLE a2(b char(5));
+				  |
+				  |____ column adı
+
+# 4 karakterli bir vari ekler, 5den fazla girilirse patlar
+$ INSERT INTO a2 VALUES ('bora');
+
+# varchar tipinde veri alan tablo oluşturur, varchar'da char'dan farklı olarak kalan kısım boşluklar ile doldurulmaz
+$ CREATE TABLE a3(a varchar(5));
+
+# tabloları gösterilir
+$ \d
+
+# tablosunun veri tiplerini gösterir
+$ \d a4
+
+# tablo içlerini gösterir
+$ SELECT * FROM a2;
+
+# postgresql'in 1gb dosya sınırı vardır, text sınırsızdır, yani 1gb alır en fazla
+$ CREATE TABLE a5(sutunadi text);
+
+# veriyi ekler
+$ INSERT INTO a5 VALUES('asidşas');
+
+# \r ile query buffer temizlenir
+$ \r
+
+# tabloyu siler
+$ DROP TABLE a1;
+
+-------------------------
+
+$ CREATE TABLE tablenew (a1 smallint, a2 int, a3 bigint);
+
+$ \d tablenew
+
+	              Table "public.tablenew"
+	 Column |   Type   | Collation | Nullable | Default 
+	--------+----------+-----------+----------+---------
+	 a1     | smallint |           |          | 
+	 a2     | integer  |           |          | 
+	 a3     | bigint   |           |          | 
+
+$ INSERT INTO tablenew VALUES ('100', '124124', '122523523552');
+
+$ SELECT * FROM tablenew;
+
+	 a1  |   a2   |      a3      
+	-----+--------+--------------
+	 100 | 124124 | 122523523552

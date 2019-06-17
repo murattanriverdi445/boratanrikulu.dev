@@ -1,0 +1,3 @@
+apt-get install -y sssd sssd-ldap sssd-tools libpam-sss libnss-sss
+
+

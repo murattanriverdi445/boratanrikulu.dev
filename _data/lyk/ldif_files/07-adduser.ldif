@@ -1,0 +1,56 @@
+dn: uid=adoyak,ou=People,dc=aydintd,dc=net
+changetype: add
+objectClass: inetOrgPerson
+objectClass: top
+objectClass: posixAccount
+objectClass: shadowAccount
+objectClass: organizationalPerson
+objectClass: person
+description: aydin.doyak
+cn: Aydin Doyak
+sn: Doyak
+uid: adoyak
+uidNumber: 10000
+gidNumber: 10000
+homeDirectory: /home/adoyak
+mail: aydin.doyak@linux.org.tr
+loginShell: /bin/bash
+userPassword: {SSHA}DMs8/ehwTkqPTDCztT+Aq2PyhyW+toxz
+
+dn: uid=bbuyukakyol,ou=People,dc=aydintd,dc=net
+changetype: add
+objectClass: inetOrgPerson
+objectClass: top
+objectClass: posixAccount
+objectClass: shadowAccount
+objectClass: organizationalPerson
+objectClass: person
+description: baris.buyukakyol
+cn: Baris Buyukakyol
+sn: Buyukakyol
+uid: bbuyukakyol
+uidNumber: 10001
+gidNumber: 10000
+homeDirectory: /home/bbuyukakyol
+mail: baris.buyukakyol@linux.org.tr
+loginShell: /bin/bash
+userPassword: {SSHA}A/71NjWfL+8MmxdJV8gFRFu6kR+0x86/
+
+dn: uid=dfisek,ou=People,dc=aydintd,dc=net
+changetype: add
+objectClass: inetOrgPerson
+objectClass: top
+objectClass: posixAccount
+objectClass: shadowAccount
+objectClass: organizationalPerson
+objectClass: person
+description: doruk.fisek 
+cn: Doruk Fisek
+sn: Fisek
+uid: dfisek
+uidNumber: 10002
+gidNumber: 13000
+homeDirectory: /home/dfisek
+mail: doruk.fisek@linux.org.tr
+loginShell: /bin/bash
+userPassword: {SSHA}2qLptuIe+AYIxUSu1P4lsRpzxZVTk9ia
