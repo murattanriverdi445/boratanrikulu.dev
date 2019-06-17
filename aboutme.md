@@ -1,16 +1,22 @@
 ---
 layout: page
-title: About me
-subtitle: Why you'd want to go on a date with me
+title: Hakkımda
+subtitle: benim hakkında şuan bilmen gereken bu kadar.
 ---
 
-My name is Inigo Montoya. I have the following qualities:
+GNU/Linux işletim sistemleri ile tanışmam sonucunda oluşan sunucu yönetimi ve siber güvenliğe olan ilgim, meslek olarak kendime bilgisayar mühendisliğini seçmeme neden oldu. Şuan Pamukkale Üniversitesi'nde okumaktayım. Ayrıca PauSiber topluluğunun da üyesiyim. 
 
-- I rock a great mustache
-- I'm extremely loyal to my family
+Sunucu tarafı ile uğraşmaktan çok büyük bir zevk duyduğum için kendimi bu alanda geliştirmeye karar verdim. Bir taraftan okulun ilk senesinde ders olarak aldığımız **C** ve **JAVA** programlama dillerinde kendimi geliştirmeye çalışırken, bir yandan da **Network Theory** ve Makine Çözümü alanlarında kendimi geliştirmeye çalışıyorum. Ayrıca en kısa sürede **Python** ve **Bash** dillerinde de kendimi geliştirmek istiyorum.
 
-What else do you need?
+---
 
-### my history
+#### Journey
 
-To be honest, I'm having some trouble remembering right now, so why don't you just watch [my movie](http://en.wikipedia.org/wiki/The_Princess_Bride_%28film%29) and it will answer **all** your questions.
+Katıldığım eğitim ve konferanslar :
+
+- Webend'17
+- PwnlyDays'18 - Uygulamalı Ağ Güvenliği (Hakkı Yüce)
+- Hacktrick’18 - Kablosuz Ağ Sızma Testleri (Besim Altınok)
+- LYK'18 - GNU/Linux Sistem Yönetimi 2. Düzey  
+- HacknBreak'18
+
