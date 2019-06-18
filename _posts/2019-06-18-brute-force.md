@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Brute Force"
+title: "Brute Force ve Kapsamlı Arama"
 tags: [Computer Science]
 subtitle: "'algoritmalar - brute force' konusu hakkında aldığım notlar."
 ---
@@ -27,7 +27,7 @@ Brute Force uygularken, performans geliştirmesi yapmak amacıyla pek düşünü
 
 ## Brute Force ile Sıralama Algoritmaları
 
-Bilgisayar bilimleri için oldukça önemli olan sıralama problemini çözmek amacıyla yüzlerce algoritma geliştirilmiştir. Bunlardan Selection Sort ve Bubble Sort ile brute force yaklaşımıyla yapılan sıralama algoritmalarına örnektir. Bu iki algoritma da `Θ(n)` ile çalışır.
+Bilgisayar bilimleri için oldukça önemli olan sıralama problemini çözmek amacıyla yüzlerce algoritma geliştirilmiştir. Bunlardan Selection Sort ve Bubble Sort, brute force yaklaşımıyla yapılan sıralama algoritmalarına örnektir. Bu iki algoritma da `Θ(n)` ile çalışır.
 
 ### Selection Sort
 
