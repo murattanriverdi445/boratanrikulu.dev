@@ -212,7 +212,7 @@ log2(n) / log3(n) = 1,6 kat
 
 ### Russian Peasant Multiplication (rus köylü çarpımı)
 
-Ruslar tarafından geliştirilen, **iki pozitif sayı daha kolay olarak çarpabilme**yi sağlayan bu algoritma aşağıdaki gibidir.
+Ruslar tarafından geliştirilen, **iki pozitif sayıyı daha kolay olarak çarpabilmeyi** sağlayan bu algoritma aşağıdaki gibidir.
 
 n ve m isimli iki tane pozitif sayı olsun elimizde. 
 
@@ -229,7 +229,7 @@ Olarak işlemi güncelleriz. İşlem `1 . m = m` olasaya kadar devam eder ve eli
 
 ### Josephus Problem
 
-Flavius Josephus, Roma'lılara karşı bir isyanı yönetmiş tarihi bir karakterdir. Roma'lılar tarafından etrafları sarıldığında ve isyankarlar teslim olmak yerine ölmeyi tercih ettiklerinde, kişilerin intihar etmeden ölebilmemeleri için herkesin birbirini öldüreceği, son ayakta kalan kişinin de kendisini öldürmesi gerektiği bir sistem ortaya atmıştır. Bu şekilde neredeyse tüm isyanlarlar (kendini öldürecek bir kişi hariç) intihar etmeden canına son verebilecekti.
+Flavius Josephus, Roma'lılara karşı bir isyanı yönetmiş tarihi bir karakterdir. Roma'lılar tarafından etrafları sarıldığında ve isyankarlar teslim olmak yerine ölmeyi tercih ettiklerinde, kişilerin intihar etmeden ölebilmeleri için herkesin birbirini öldüreceği, son ayakta kalan kişinin de kendisini öldürmesi gerektiği bir sistem ortaya atmıştır. Bu şekilde neredeyse tüm isyanlarlar (kendini öldürecek olan bir kişi hariç) intihar etmeden canlarına son verebilecekti.
 
 Fakat Josephus bu fikri ortaya atarken aklında ölmek gibi bir fikir yoktu. **En son hayatta kalacak kişinin yerin durmalı** ve ardından kendini öldürmek yerine Roma'lılara teslim olmalıydı. Peki tam olarak nerede durmalıydı ?
 
@@ -245,7 +245,7 @@ Aşağıdaki gibi adamların bir çember yapıp, saat yönünde ilerleyerek birb
 
 6 kişilik bu örnekte en son ayakta kalan adam 5 numaralı yerde duran olacaktır.
 
-En son hayatta kalan kişinin konumunu bulmanın basit bir yolu vardır. Kişi sayısı **ikilik taban**da yazılır, ardından sola doğru bir kayma işlemi yapılır (en soldaki rakamın en sağa atılması), çıkan ikilik tabandaki sayının onluk tabandaki karşılığı Josephus'un durması gerektiği noktayı gösterecektir.
+En son hayatta kalan kişinin konumunu bulmanın basit bir yolu vardır. Kişi sayısı **ikilik tabanda** yazılır, ardından sola doğru bir kayma işlemi yapılır (en soldaki rakamın en sağa atılması), çıkan ikilik tabandaki sayının onluk tabandaki karşılığı Josephus'un durması gerektiği noktayı gösterecektir.
 
 `J(5) = J(1 0 1) = 0 1 1 = 3,`  
 `J(6) = J(1 1 0) = 1 0 1 = 5,`  
