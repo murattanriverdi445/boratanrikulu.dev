@@ -1,0 +1,20 @@
+<div class="page__comments-form">
+  <h3 class="page__comments-title">Leave a Comment</h3>
+  <form id="new_comment" class="page__comments-form js-form form" method="post" action="http://lvh.me:3000/api/v1/comments">
+    <div class="form-group">
+      <label for="comment-form-message">Text <small class="required">*</small></label><br>
+      <textarea type="text" rows="12" cols="36" id="comment-form-text" name="comment[text]" tabindex="1"></textarea>
+    </div>
+    <div class="form-group">
+      <label for="comment-form-name">Author <small class="required">*</small></label>
+      <input type="text" id="comment-form-author" name="comment[author]" tabindex="2" />
+    </div>
+    <div class="form-group">
+      <label for="comment-form-email">Email address <small class="required">*</small></label>
+      <input type="email" id="comment-form-email" name="comment[email]" tabindex="3" />
+    </div>
+    <div class="form-group">
+      <button type="submit" id="comment-form-submit" tabindex="5" class="btn btn--primary btn--large">Submit Comment</button>
+    </div>
+  </form>
+</div>
