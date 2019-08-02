@@ -7,7 +7,7 @@
 # RAID bir sanallaştırma yöntemidir.
 	-> RAID 0
 	-> RAID 1
-	-> RAID 5
+	-> RAID 5 
 
 ## RAID 0 ##
 	100 GB     100GB
