@@ -16,17 +16,19 @@ subtitle: "Rails'da arkaplan görevlerin nasıl yapılacağını anlatır."
 
 # Arkaplan Görevi Nedir ?
 
-Rails'da arkaplan görevlerini yönetmek için kullanılan Active Record'u açıklamaya başlamadan önce ilk olarak arkplan görevi kavramının ne olduğuna açıklık getirmek gerekiyor.
+Rails'da arka plan görevlerini yönetmek için kullanılan Active Record'u açıklamaya başlamadan önce ilk olarak arkaplan görevi kavramının ne olduğuna açıklık getirmek gerekiyor.
 
-Arkaplan görevleri bir işlemin durmasına rol açmadan, eş bir çizgide yürüyerek rol almasıdır. Eposta yollanması buna çok güzel bir örnektir. Örneğin kullanıcı sistemimize kayıt olmak için kayıtol formunu doldurduğunda onaylama epostası yollanıyor olsun. Kullanıcı bu tuşa bastığında eposta yollama işlemini direkt olarak işleme alırsak, eposta yollanasaya kadar kullanıcı yükleme ekranında bekler. Fakat eğer arkaplan görevi olarak çalışmasını sağlar ise işlem bir kuyruğa alınır ve sayfa direkt yüklenir..
+Arkaplan görevleri bir işlemin durmasına rol açmadan, eş bir çizgide yürüyerek rol almasıdır. E-posta yollanması buna çok güzel bir örnektir. Örneğin kullanıcı sistemimize kayıt olmak için kayıt ol formunu doldurduğunda onaylama epostası yollanıyor olsun. Kullanıcı bu tuşa bastığında eposta yollama işlemini direkt olarak işleme alırsak, e-posta yollanasıya kadar kullanıcı yükleme ekranında bekler. Fakat eğer arka plan görevi olarak çalışmasını sağlar ise işlem bir kuyruğa alınır ve sayfa direkt yüklenir.
+
 
 ---
 
 # Nerelerde Arkaplan Görevlerine İhtiyaç Olabilir ?
 
-Örneğin bir kullanıcı alışveriş sitesinden birşey satın aldığında arka planda bir fatura oluşturup eposta olarak yollamak gerekir. Bu fatura oluşturma ve eposta yollama aşamalarında arkaplan görevi kullanmak mantıklı olacaktır.
+Örneğin bir kullanıcı alışveriş sitesinden bir şey satın aldığında arka planda bir fatura oluşturup e-posta olarak yollamak gerekir. Bu fatura oluşturma ve e-posta yollama aşamalarında arka plan görevi kullanmak mantıklı olacaktır.
 
-Ya da şunu hayal edin haftalık bülten sitemiz var. Kullanıcı epostasını sisteme girdiğinde haftalık olarak bilgilendirme epostası almak istiyor, bu durumda da arkaplan görevleri kullanmak mantıklı olacaktır.
+Ya da şunu hayal edin haftalık bülten sitemiz var. Kullanıcı e-postasını sisteme girdiğinde haftalık olarak bilgilendirme e-postası almak istiyor, bu durumda da arka plan görevleri kullanmak mantıklı olacaktır.
+
 
 ---
 
@@ -34,7 +36,9 @@ Ya da şunu hayal edin haftalık bülten sitemiz var. Kullanıcı epostasını s
 
 Active Job, zamanlanmış olarak çalışacak görevleri tanımlayan, bu görevlerin kuyruk servislerine (çoğunlukla III. parti) aktarılmasından sorumlu bir framework yani uygulama çatısıdır.
 
-Active Job'un ana amacı kuyruk(queue) amacıyla kullandığımız 3. parti servisi değişse dahi daha önceden yazmış olduğumuz görevlerin yani job'ların baştan yazımının önüne geçmektir.
+
+Active Job'un ana amacı; Kuyruk(queue) amacıyla kullandığımız III. parti servisi değişse dahi daha önceden yazmış olduğumuz görevlerin yani job'ların baştan yazımının önüne geçmektir.
+
 
 Active Job sayesinde görevlerimizi yazabilir ve istediğimiz kuyruk servisi kullanabilir, değiştirebiliriz.
 
@@ -42,7 +46,8 @@ Active Job sayesinde görevlerimizi yazabilir ve istediğimiz kuyruk servisi kul
 
 # Kuyruk Servisleri
 
-Rails'de varsayılan olarak kuyruk mekanizması RAM üzerinde tutulacak şekildedir. Herhangi bir elektrik kesintisinde ya da RAM'de oluşacak bir sorunda tüm kuyruktaki görevler yok olacaktır.
+Rails'de varsayılan olarak kuyruk mekanizması RAM üzerinde tutulacak şekildedir. Herhangi bir elektrik kesintisinde ya da RAM'de oluşacak bir sorunda kuyruktaki tüm görevler yok olacaktır.
+
 
 Bu durumda III. parti bir kuyruk servisi kullanmak mantıklı olabilir.  
 Bu servislere `Sidekiq`, `Resque`, `Delayed Job` vs. örnek verilebilir.  
@@ -54,7 +59,8 @@ Kuyruk servisini ayarlamak oldukça basit. Config dosyasında belirtmemiz yeterl
 config.active_job.queue_adapter = :sidekiq
 ```
 
-Ya da görev bazlı olarak seçeceğimiz servisi değiştirebiliriz. Yani config dosyasında varsayılan olarak ayarlanan servisin üzerine yazmış oluruz. Örneğin haftalık bülten görevi için sidekiq kullanırken, ödeme hatırlatıcı epostaların atılması için resque kullanabiliriz.
+Ya da görev bazlı olarak seçeceğimiz servisi değiştirebiliriz. Yani config dosyasında varsayılan olarak ayarlanan servisin üzerine yazmış oluruz. Örneğin haftalık bülten görevi için "sidekiq" kullanırken, ödeme hatırlatıcı e-postaların atılması için "resque" kullanabiliriz.
+
 
 ```ruby
 class NewsletterJob < ApplicationJob
@@ -68,9 +74,10 @@ class FeeJob < ApplicationJob
 end
 ```
 
-Ben bu örnekte sidekiq kullanmayı tercih ettim.
+Ben, bu örnekte sidekiq kullanmayı tercih ettim.
 
-Bunun için Gemfile'e sidekiq'i eklemeli ve routes dosyasını da aşağıdaki gib ayarlamalısınız. Ayrıca sidekiq çalışmak için redis sunucusuna ihtiyaç duyuyor.
+Bunun için Gemfile'e sidekiq'i eklemeli ve routes dosyasını da aşağıdaki gibi ayarlamalısınız. Ayrıca sidekiq çalışmak için redis sunucusuna ihtiyaç duyuyor.
+
 
 Gemfile
 ```ruby
@@ -89,9 +96,9 @@ end
 
 ---
 
-# Kullanıcı Kayıt Olduğunda Arkaplanda Eposta Atılması
+# Kullanıcı Kayıt Olduğunda Arkaplanda E-posta Atılması
 
-Uygulamızda kullanıcılar kayıt olduğunda arkaplanda eposta yollamak istiyoruz.
+Uygulamızda kullanıcılar kayıt olduğunda arka planda e-posta yollamak istiyoruz.
 
 Kullanıcıyı yaratalım.
 
@@ -99,13 +106,14 @@ Kullanıcıyı yaratalım.
 rails generate scaffold User name:string email:string
 ```
 
-Eposta yollayabilmek için mailer ekleyelim
+E-posta yollayabilmek için mailer ekleyelim
+
 
 ```ruby
 rails generate mailer UserMailer
 ```
 
-Bu mailer'e welcome diye bir method ekleyelim
+Bu mailer'e **welcome** diye bir method ekleyelim
 
 ```ruby
 class UserMailer < ApplicationMailer
@@ -117,7 +125,7 @@ end
 
 ```
 
-Model'e de bir callback ekleyelim. A rtık kullanıcı kayıt olduğunda arkaplan görevi olarak bir eposta atıyoruz.
+Model'e de bir callback ekleyelim. Artık kullanıcı kayıt olduğunda arka plan görevi olarak bir e-posta atıyoruz.
 
 ```ruby
 class User < ApplicationRecord
@@ -166,7 +174,8 @@ Bunu tetiklemek için
 GuestsCleanupJob.perform_later(@user)
 ```
 
-Bizim tetikleme tarihimi belli olduğu için
+Bizim tetikleme tarihimiz belli olduğu için
+
 ```ruby
 GuestsCleanupJob.set(wait_until: @user.expire_date).perform_later(@user)
 ```
@@ -175,7 +184,7 @@ GuestsCleanupJob.set(wait_until: @user.expire_date).perform_later(@user)
 
 # Görevlere Callbacks eklemek
 
-Görevlere de aynı model'lerde yaptığımız gibi callback eklenebilir.
+Görevlere de aynı modellerde yaptığımız gibi callback eklenebilir.
 
 ```ruby
 class GuestsCleanupJob < ApplicationJob
