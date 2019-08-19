@@ -14,6 +14,12 @@ Mesleki açıdan hedefim -şuanki düşüncelerime göre- kendimi **DevOps** ala
 
 **Maceram**, katıldığım eğitim ve konferanslar.
 
+- Ruby/Rails - Mustafa Akgül Özgür Yazılım Yaz Kampı (yardımcı eğitmen olarak)
+
+![oyk_2019_yaz](journey/oyk2019yaz1.jpg)
+
+![oyk_2019_yaz](journey/oyk2019yaz2.jpg)
+
 - Rails Girls (eğitmen olarak)
 
 ![rails_girls](journey/rails_girls.jpg)
