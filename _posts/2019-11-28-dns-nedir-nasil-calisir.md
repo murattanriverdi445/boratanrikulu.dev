@@ -16,7 +16,7 @@ subtitle: "dns'i tanımını yapar, nasıl çalıştığını açıklar."
 
 ## DNS Nedir ?
 
-DNS'i internetin adres defteri olarak düşünebiliriz. Insanlar Websitelerine domain adresleri ile ulaşır, boratanrikul.dev gibi. Fakat gerçekte tarayıcılar için bu text ifadesi anlamsızdır, tarayıcının websitesine istek yapıp cevap alabilmesi için IP adresine ihtiyacı vardır. Bu IP adresini DNS bize verir.
+DNS'i internetin adres defteri olarak düşünebiliriz. Insanlar Websitelerine domain adresleri ile ulaşır, boratanrikulu.dev gibi. Fakat gerçekte tarayıcılar için bu text ifadesi anlamsızdır, tarayıcının websitesine istek yapıp cevap alabilmesi için IP adresine ihtiyacı vardır. Bu IP adresini DNS bize verir.
 
 <p align="center">
   <img src="/img/dns-nedir-nasil-calisir/0.png" alt="what-is-dns">
@@ -30,7 +30,7 @@ Internete bağlı her cihazın eşsiz bir IP adresi vardır. Yani yukarda DNS so
 
 Anladık, DNS text'e karşılık bize bir IP adresi verir. Peki DNS nasıl çalışarak bu işlemi gerçekleştirir ?
 
-DNS'in nasıl çalıştığını anlamadan için DNS sunucu türlerinin neler olduğunu anlamakta fayda var. 4 çeşit DNS sunucusu bulunur.
+DNS'in nasıl çalıştığını anlamak için DNS sunucu türlerinin neler olduğunu anlamakta fayda var. 4 çeşit DNS sunucusu bulunur.
 
 Bunlar;
 - Recursive resolvers,  
@@ -125,6 +125,8 @@ Peki Authoritative Nameserver tarafından geri verilen cevapta neler olabilir, h
 ---
 
 ## Genel Resim
+
+DNS sunucu türlerini öğrendiğimize göre artık genel resme bakabiliriz.
 
 ```
  --------   What is IP of boratanrikulu.dev ?
@@ -310,11 +312,12 @@ More information: .
   tcpdump -r dumpfile.pcap
 ```
 
-[**`[kaynak]`**](https://www.lifewire.com/traceroute-linux-command-4092586)
 
 ---
 
 ### Traceroute
+
+[**`[kaynak]`**](https://www.lifewire.com/traceroute-linux-command-4092586)
 
 Bir host'a yapılan istekte paketin geçtiği yollara bakmak amacıyla kullanabilir.
 
