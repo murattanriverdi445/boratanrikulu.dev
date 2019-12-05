@@ -47,7 +47,7 @@ Diğer bir kısım olan **Body**, yollanacak mesajı saklayan bölümdür. Bu b�
 	<img src="/img/smtp-nasil-calisir-ve-postfix-kurulumu/1.png">
 </p>
 
-**admin@boratanrikulu.me** kullanıcısının **elun.musk@spacex.com** kullanıcısına mail atmak istediğini düşünelim.
+**admin@boratanrikulu.me** kullanıcısının **elon.musk@spacex.com** kullanıcısına mail atmak istediğini düşünelim.
 
 Bu durumda client tarafından mail yollandığında, mail ilk olarak [**boratanrikulu.me**](https://boratanrikulu.me)'nin mail server'ına gidecektir. Bu **server bilgisi DNS sorgusunda bulunan MX kaydı ile tespit edilir**. Yani mail yollanacağında MX kaydı sorgusu yapılır ve mail ona göre ilgili server'a yollanır.  
 
@@ -264,9 +264,9 @@ less /var/spool/mail/root
 
 ---
 
-#### Elun Musk'dan Gelen Mail
+#### Elon Musk'dan Gelen Mail
 
-Daha önceden de belirttiğim gibi, default ayarlarda aslında yapılmasını bekleyeceğimiz hiçbir kontrol yapılmaz. Örneğin aşağıdaki gibi bir mail'i sanki **elun.musk@spacex.com**'dan root kullanıcısına yollanmış gibi atarsak; bu mail kullanıcıya sanki Elun Musk tarafından gelmiş gibi ulaşacaktır.  
+Daha önceden de belirttiğim gibi, default ayarlarda aslında yapılmasını bekleyeceğimiz hiçbir kontrol yapılmaz. Örneğin aşağıdaki gibi bir mail'i sanki **elon.musk@spacex.com**'dan root kullanıcısına yollanmış gibi atarsak; bu mail kullanıcıya sanki Elon Musk tarafından gelmiş gibi ulaşacaktır.  
 
 **Evet! Yanlış duymadın, default ayarlar ile durum bu şekilde.**
 
@@ -277,7 +277,7 @@ telnet mail.boratanrikulu.me smtp
 EHLO mail.boratanrikulu.me
 ```
 ```
-MAIL FROM:elun.musk@spacex.com
+MAIL FROM:elon.musk@spacex.com
 ```
 ```
 RCPT TO:root@mail.boratanrikulu.me
@@ -298,7 +298,8 @@ QUIT
 less /var/spool/mail/root
 ```
 
-Gördüğünüz gibi, Elun Musk tarafından bir iş teklifi aldım **:)**.
+Gördüğünüz gibi, Elon
+Musk tarafından bir iş teklifi aldım **:)**.
 
 <p align="center"> 
 	<img src="/img/smtp-nasil-calisir-ve-postfix-kurulumu/7.png">
